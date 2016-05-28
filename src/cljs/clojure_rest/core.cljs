@@ -1,5 +1,5 @@
 (ns clojure-rest.core
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require [reagent.core :as r]))
 
 
 (enable-console-print!)
@@ -7,26 +7,58 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn create-task
+  [name done]
+  {:name name
+   :done done})
+
 (defn create-card
   "Create a card to display in the dash-board"
-  [title description status]
+  [title description status & tasks]
   {:title title
    :description description
-   :status status})
+   :status status
+   :tasks (into [] tasks)})
 
 (def card-list
-  [(create-card "1st card" "This is my first description" :backlog)
-   (create-card "2nd card" "This is my second description" :under-dev)
-   (create-card "3nd card" "This is my third description" :under-dev)
-   (create-card "4th card" "This is my fourth description" :done)])
+  [(create-card
+     "1st card"
+     "This is my first description"
+     :backlog)
+   (create-card
+     "2nd card"
+     "This is my second description"
+     :under-dev
+     (create-task "Done some stuff" true)
+     (create-task "Done some more stuff" false))
+   (create-card
+     "3nd card"
+     "This is my third description"
+     :under-dev)
+   (create-card
+     "4th card"
+     "This is my fourth description"
+     :done)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn render-tasks
+  [tasks]
+  [:ul
+   (for [t tasks]
+     [:li.checklist__task
+      [:input {:type "checkbox" :default-checked (:done t)}]
+      (:name t)
+      [:a.checklist__task--remove {:href "#"}]
+     ])
+  ])
 
 (defn render-card
   [card]
   [:div.card
    [:div.card-title (:title card)]
    [:div.card-description (:description card)]
+   [render-tasks (:tasks card)]
   ])
 
 (defn render-list
@@ -48,5 +80,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(reagent/render [render-board]
+(r/render [render-board]
   (js/document.getElementById "app"))

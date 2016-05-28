@@ -90,6 +90,18 @@ ul
 	content: 'v'
 }
 
+.checklist__task:fist-child
+{
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: dashed 1px #ddd;
+}
 
+.checklist__task--remove:after
+{
+	display: inline-block;
+	color: #d66;
+	content: "+";
+}
 
 

@@ -44,26 +44,28 @@
 
 (defn render-tasks
   [tasks]
-  [:ul
+  [:div.checklist
+   [:ul
    (for [t tasks]
      [:li.checklist__task
       [:input {:type "checkbox" :default-checked (:done t)}]
       (:name t)
       [:a.checklist__task--remove {:href "#"}]
      ])
-  ])
+  ]])
 
 (defn render-card
   [card]
   [:div.card
-   [:div.card-title (:title card)]
-   [:div.card-description (:description card)]
+   [:div.card__title (:title card)]
+   [:div.card__details (:description card)]
    [render-tasks (:tasks card)]
   ])
 
 (defn render-list
-  [cards]
-  [:div.list ; TODO - Try to give a name
+  [title cards]
+  [:div.list
+   [:h1 title]
    (for [c cards]
      [render-card c])
   ])
@@ -72,9 +74,9 @@
   []
   (let [filter-status (fn [status] (filter #(= status (:status %)) card-list))]
     [:div.app
-     [render-list (filter-status :backlog)]
-     [render-list (filter-status :under-dev)]
-     [render-list (filter-status :done)]
+     [render-list "Backlog" (filter-status :backlog)]
+     [render-list "Under dev" (filter-status :under-dev)]
+     [render-list "Done" (filter-status :done)]
     ]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

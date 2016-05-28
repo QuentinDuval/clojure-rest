@@ -1,3 +1,5 @@
+/* Check special characters at: https://brajeshwar.github.io/entities/ */
+
 *
 {
 	box-sizing: border-box;
@@ -83,12 +85,12 @@ ul
 {
 	display: inline-block;
 	width: 1em;
-	content: '>'
+	content: '\25b6'
 }
 
 .card__title--is-open:before
 {
-	content: 'v'
+	content: '\25bc'
 }
 
 .checklist__task:first-child
@@ -102,7 +104,7 @@ ul
 {
 	display: inline-block;
 	color: #d66;
-	content: 'X';
+	content: '\2718';
 }
 
 

@@ -43,29 +43,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def card-list
-  [(create-card
-     "1st card"
-     "This is my first description"
-     :bug-fix
-     :backlog
-     (create-task "Done some stuff" true))
-   (create-card
-     "2nd card"
-     "This is my second description"
-     :enhancement
-     :under-dev
-     (create-task "Done some stuff" true)
-     (create-task "Done some more stuff" false))
-   (create-card
-     "3nd card"
-     "This is my third description"
-     :bug-fix
-     :under-dev)
-   (create-card
-     "4th card"
-     "This is my fourth description"
-     :enhancement
-     :done)])
+  (r/atom
+    [(create-card
+       "1st card"
+       "This is my first description"
+       :bug-fix
+       :backlog
+       (create-task "Done some stuff" true))
+     (create-card
+       "2nd card"
+       "This is my second description"
+       :enhancement
+       :under-dev
+       (create-task "Done some stuff" true)
+       (create-task "Done some more stuff" false))
+     (create-card
+       "3nd card"
+       "This is my third description"
+       :bug-fix
+       :under-dev)
+     (create-card
+       "4th card"
+       "This is my fourth description"
+       :enhancement
+       :done)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -80,7 +81,7 @@
 (defn render-tasks
   [tasks]
   [:div.checklist
-   [:ul (map render-task tasks)]
+   [:ul (for [t tasks] [render-task t])]
   ])
 
 (defn card-side-color
@@ -124,5 +125,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(r/render [render-board card-list]
+(r/render [render-board @card-list]
   (js/document.getElementById "app"))

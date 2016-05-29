@@ -61,18 +61,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO - Separate concerns : cards values and their id (for better association)
+; TODO - Separate concerns:
+; - cards values and their id, and the order in which they appear
+; - tasks values and their id
 
 (def card-list (r/atom []))
 
 (defn add-task-to!
-  "Add a new task in the card-list"
+  "Add a new task in the card"
   [card-id task]
   (defn add-if! [card]
     (if (= card-id (:card-id card))
       (update-in card [:tasks] conj (create-task! task false))
       card))
   (swap! card-list #(mapv add-if! %)))
+
+(defn remove-task-from!
+  "Remove a task from a card"
+  [card-id task-id]
+  (defn remove-if! [card]
+    (if (= card-id (:card-id card))
+      (update-in card [:tasks]
+        (fn [tasks]
+          (filterv #(not= (:task-id %) task-id) tasks)))
+      card))
+  (swap! card-list #(mapv remove-if! %)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -112,21 +125,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-task
-  [task]
+  [card-id task]
   [:li.checklist__task
    [:input {:type "checkbox" :default-checked (:done task)}]
    (:name task)
    [:a.checklist__task--remove
-    {:href "#"
-     :on-click #(js/alert "TODO - remove the task")}]
+    {:href "#" :on-click #(remove-task-from! card-id (:task-id task))}]
   ])
 
 (defn render-tasks
-  [tasks]
+  [card-id tasks]
   [:div.checklist
    [:ul
     (for [t tasks]
-      ^{:key (:task-id t)} [render-task t])]
+      ^{:key (:task-id t)} [render-task card-id t])]
   ])
 
 (defn card-side-color
@@ -161,7 +173,7 @@
        (when @show-details
          [:div.card__details
           (:description card)
-          [render-tasks (:tasks card)]
+          [render-tasks (:card-id card) (:tasks card)]
           [render-add-list (:card-id card)]
          ])
        ])
@@ -185,7 +197,7 @@
 (defn render-app
   []
   (let [search-text (r/atom "")
-        on-search-enter (fn [e] (reset! search-text (.. e -target -value)))]
+        on-search-enter #(reset! search-text (.. % -target -value))]
     (fn []
       [:div
        [:input.search-input

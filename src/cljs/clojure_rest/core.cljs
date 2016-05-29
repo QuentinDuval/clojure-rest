@@ -5,6 +5,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-task
+  "Create a task to display in a card"
   [id name done]
   {:task-id id
    :name name
@@ -39,6 +40,18 @@
   [status cards]
   (filter #(= status (:status %)) cards))
 
+(defn str-contains
+  "Check whether the first string contains the second string"
+  [stack needle]
+  (< -1 (.indexOf stack needle)))
+
+(defn filter-by-title
+  "Keep only cards that contains the searched string inside their title"
+  [title cards]
+  (if (empty? title)
+    cards
+    (filter #(str-contains (:title %) title) cards)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def card-list
@@ -57,7 +70,7 @@
        (create-task 2 "Done some stuff" true)
        (create-task 3 "Done some more stuff" false))
      (create-card
-       3 "3nd card"
+       3 "3rd card"
        "This is my third description"
        :bug-fix
        :under-dev)
@@ -89,7 +102,7 @@
 
 (defn card-side-color
   [card]
-  {:position "absolute" :zindex -1 :top 0 :bottom 0 :left 0 :width 7
+  {:position "absolute" :zindex -1 :top 0 :bottom 0 :left 0 :width 5
    :backgroundColor (-> card :category category->color)
   })
 
@@ -125,8 +138,18 @@
      [render-list status cards])
   ])
 
+(defn render-app
+  []
+  (let [search-text (r/atom "")
+        on-search-enter (fn [e] (reset! search-text (.. e -target -value)))]
+    (fn []
+      [:div
+       [:input.search-input
+        {:type "text" :placeholder "search"
+         :value @search-text :on-change on-search-enter}]
+       [render-board (filter-by-title @search-text @card-list)]])
+    ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(r/render [render-board @card-list]
-  (js/document.getElementById "app"))
+(r/render [render-app] (js/document.getElementById "app"))

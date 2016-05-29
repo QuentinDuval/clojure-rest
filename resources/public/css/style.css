@@ -32,6 +32,15 @@ ul
 	margin: 0;
 }
 
+.search-input
+{
+	border: 1px dashed #bbb;
+	width: 99%;
+	padding: 10px;
+	margin: 5px 5px;
+	border-radius: 3px;
+}
+
 .app
 {
 	white-space: nowrap;

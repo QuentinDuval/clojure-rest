@@ -38,7 +38,8 @@
   [(create-card
      "1st card"
      "This is my first description"
-     :backlog)
+     :backlog
+     (create-task "Done some stuff" true))
    (create-card
      "2nd card"
      "This is my second description"
@@ -75,13 +76,14 @@
   (let [is-show-details (r/atom false)
         show-details #(swap! is-show-details not)]
     (fn [card]
-      [:div.card
-       [:div.card__title {:on-click show-details} (:title card)]
-       (when @is-show-details
-         [:div ;TODO - If there is not div here, it does not work
-          [:div.card__details (:description card)]
-          [render-tasks (:tasks card)]])
-      ])
+      (if-not @is-show-details
+        [:div.card
+         [:div.card__title {:on-click show-details} (:title card)]]
+        [:div.card
+         [:div.card__title--is-open {:on-click show-details} (:title card)]
+         [:div.card__details (:description card)]
+         [render-tasks (:tasks card)]]
+        ))
     ))
 
 (defn render-list

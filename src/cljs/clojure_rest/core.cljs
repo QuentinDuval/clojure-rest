@@ -1,5 +1,8 @@
 (ns clojure-rest.core
-  (:require [reagent.core :as r]))
+  (:require
+    [reagent.core :as r]
+    [clojure-rest.api :as api]
+    [clojure-rest.fake-data :as fake]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -11,33 +14,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce next-task-id (atom 0))
-(defonce next-card-id (atom 0))
-
-(defn create-task!
-  "Create a task to display in a card"
-  [name done]
-  (swap! next-task-id inc)
-  {:task-id @next-task-id
-   :name name
-   :done done})
-
-(defn create-card!
-  "Create a card to display in the dash-board"
-  [title description category status & tasks]
-  (swap! next-card-id inc)
-  {:card-id @next-card-id
-   :title title
-   :description description
-   :category category
-   :status status
-   :tasks (into [] tasks)})
-
 (defn status->str
   [status]
   (condp = status
     :backlog "Backlog"
-    :under-dev "Under dev"
+    :under-dev "In Progress"
     :done "Done"
     :else "Unknown"))
 
@@ -72,7 +53,7 @@
   [card-id task]
   (defn add-if! [card]
     (if (= card-id (:card-id card))
-      (update-in card [:tasks] conj (create-task! task false))
+      (update-in card [:tasks] conj (api/create-task! task false))
       card))
   (swap! card-list #(mapv add-if! %)))
 
@@ -89,37 +70,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def init-card-list
-  "Fake card list returned by the server"
-  [(create-card!
-     "1st card"
-     "This is my first description"
-     :bug-fix
-     :backlog
-     (create-task! "Done some stuff" true))
-   (create-card!
-     "2nd card"
-     "This is my second description"
-     :enhancement
-     :under-dev
-     (create-task! "Done some stuff" true)
-     (create-task! "Done some more stuff" false))
-   (create-card!
-     "3rd card"
-     "This is my third description"
-     :bug-fix
-     :under-dev)
-   (create-card!
-     "4th card"
-     "This is my fourth description"
-     :enhancement
-     :done)])
-
 (defn fake-fetch
   []
   (js/setTimeout
     #(swap! card-list
-       (fn [cards] (into cards init-card-list)))
+       (fn [cards] (into cards fake/fake-card-list)))
     1000))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

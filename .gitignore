@@ -15,3 +15,4 @@ figwheel_server.log
 pom.xml
 pom.xml.asc
 .settings/ccw.repl.cmdhistory.prefs
+src/cljs/clojure_rest/fake_data.cljs

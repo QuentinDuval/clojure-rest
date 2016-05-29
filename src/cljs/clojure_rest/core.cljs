@@ -5,14 +5,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-task
-  [name done]
-  {:name name
+  [id name done]
+  {:task-id id
+   :name name
    :done done})
 
 (defn create-card
   "Create a card to display in the dash-board"
-  [title description category status & tasks]
-  {:title title
+  [id title description category status & tasks]
+  {:card-id id
+   :title title
    :description description
    :category category
    :status status
@@ -42,25 +44,25 @@
 (def card-list
   (r/atom
     [(create-card
-       "1st card"
+       1 "1st card"
        "This is my first description"
        :bug-fix
        :backlog
-       (create-task "Done some stuff" true))
+       (create-task 1 "Done some stuff" true))
      (create-card
-       "2nd card"
+       2 "2nd card"
        "This is my second description"
        :enhancement
        :under-dev
-       (create-task "Done some stuff" true)
-       (create-task "Done some more stuff" false))
+       (create-task 2 "Done some stuff" true)
+       (create-task 3 "Done some more stuff" false))
      (create-card
-       "3nd card"
+       3 "3nd card"
        "This is my third description"
        :bug-fix
        :under-dev)
      (create-card
-       "4th card"
+       4 "4th card"
        "This is my fourth description"
        :enhancement
        :done)]))
@@ -78,7 +80,11 @@
 (defn render-tasks
   [tasks]
   [:div.checklist
-   [:ul (for [t tasks] [render-task t])]
+   [:ul
+    (for [t tasks]
+      ^{:key (:task-id t)} [render-task t])]
+   [:input.checklist--add-task
+    {:type "text" :placeholder "Type then hit Enter to add a task"}]
   ])
 
 (defn card-side-color
@@ -109,7 +115,7 @@
   [:div.list
    [:h1 (status->str status)]
    (for [c (filter-by-status status cards)]
-     [render-card c])
+     ^{:key (:card-id c)} [render-card c])
   ])
 
 (defn render-board

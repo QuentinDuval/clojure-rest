@@ -9,6 +9,7 @@
 ;; degraded performance.
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
+(enable-console-print!)
 
 (def http-handler
   (wrap-reload #'clojure-rest.server/http-handler))

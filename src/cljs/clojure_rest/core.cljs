@@ -20,6 +20,20 @@
    :status status
    :tasks (into [] tasks)})
 
+(defn status->str
+  [status]
+  (condp = status
+    :backlog "Backlog"
+    :under-dev "Under dev"
+    :done "Done"
+    :else "Unknown"))
+
+(defn filter-by-status
+  [status cards]
+  (filter #(= status (:status %)) cards))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def card-list
   [(create-card
      "1st card"
@@ -42,17 +56,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn render-task
+  [task]
+  [:li.checklist__task
+   [:input {:type "checkbox" :default-checked (:done task)}]
+   (:name task)
+   [:a.checklist__task--remove {:href "#"}]
+  ])
+
 (defn render-tasks
   [tasks]
   [:div.checklist
-   [:ul
-   (for [t tasks]
-     [:li.checklist__task
-      [:input {:type "checkbox" :default-checked (:done t)}]
-      (:name t)
-      [:a.checklist__task--remove {:href "#"}]
-     ])
-  ]])
+   [:ul (map render-task tasks)]
+  ])
 
 (defn render-card
   [card]
@@ -63,24 +79,21 @@
   ])
 
 (defn render-list
-  [title cards]
+  [status cards]
   [:div.list
-   [:h1 title]
-   (for [c cards]
-     [render-card c])
+   [:h1 (status->str status)]
+   (map render-card (filter-by-status status cards))
   ])
 
 (defn render-board
-  []
-  (let [filter-status (fn [status] (filter #(= status (:status %)) card-list))]
-    [:div.app
-     [render-list "Backlog" (filter-status :backlog)]
-     [render-list "Under dev" (filter-status :under-dev)]
-     [render-list "Done" (filter-status :done)]
-    ]))
+  [cards]
+  [:div.app
+   (for [status [:backlog :under-dev :done]]
+     [render-list status cards])
+  ])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(r/render [render-board]
+(r/render [render-board card-list]
   (js/document.getElementById "app"))

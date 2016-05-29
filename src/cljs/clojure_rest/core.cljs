@@ -54,31 +54,42 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def card-list
-  (r/atom
-    [(create-card
-       1 "1st card"
-       "This is my first description"
-       :bug-fix
-       :backlog
-       (create-task 1 "Done some stuff" true))
-     (create-card
-       2 "2nd card"
-       "This is my second description"
-       :enhancement
-       :under-dev
-       (create-task 2 "Done some stuff" true)
-       (create-task 3 "Done some more stuff" false))
-     (create-card
-       3 "3rd card"
-       "This is my third description"
-       :bug-fix
-       :under-dev)
-     (create-card
-       4 "4th card"
-       "This is my fourth description"
-       :enhancement
-       :done)]))
+(def card-list (r/atom []))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def init-card-list
+  "Fake card list returned by the server"
+  [(create-card
+     1 "1st card"
+     "This is my first description"
+     :bug-fix
+     :backlog
+     (create-task 1 "Done some stuff" true))
+   (create-card
+     2 "2nd card"
+     "This is my second description"
+     :enhancement
+     :under-dev
+     (create-task 2 "Done some stuff" true)
+     (create-task 3 "Done some more stuff" false))
+   (create-card
+     3 "3rd card"
+     "This is my third description"
+     :bug-fix
+     :under-dev)
+   (create-card
+     4 "4th card"
+     "This is my fourth description"
+     :enhancement
+     :done)])
+
+(defn fake-fetch
+  []
+  (js/setTimeout
+    #(reset! card-list init-card-list)
+    1000))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -153,6 +164,12 @@
       ])
     ))
 
+(def fetch-and-render-app
+  "Render the app - adding a fetching of data when the DOM is mounted"
+  (with-meta render-app
+    {:component-did-mount fake-fetch}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(r/render [render-app] (js/document.getElementById "app"))
+(r/render [fetch-and-render-app]
+  (js/document.getElementById "app"))

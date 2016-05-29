@@ -145,9 +145,12 @@
     (fn []
       [:div
        [:input.search-input
-        {:type "text" :placeholder "search"
-         :value @search-text :on-change on-search-enter}]
-       [render-board (filter-by-title @search-text @card-list)]])
+        {:type "text"
+         :placeholder "search"
+         :value @search-text
+         :on-change on-search-enter}]
+       [render-board (filter-by-title @search-text @card-list)]
+      ])
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

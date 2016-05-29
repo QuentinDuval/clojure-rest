@@ -61,9 +61,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; TODO - Separate concerns : cards values and their id (for better association)
+
 (def card-list (r/atom []))
 
 (defn add-task-to!
+  "Add a new task in the card-list"
   [card-id task]
   (defn add-if! [card]
     (if (= card-id (:card-id card))

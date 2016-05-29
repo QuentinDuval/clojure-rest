@@ -56,7 +56,6 @@
 
 (def card-list (r/atom []))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def init-card-list
@@ -88,7 +87,8 @@
 (defn fake-fetch
   []
   (js/setTimeout
-    #(reset! card-list init-card-list)
+    #(swap! card-list
+       (fn [cards] (into cards init-card-list)))
     1000))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -14,7 +14,7 @@
 (defonce next-task-id (atom 0))
 (defonce next-card-id (atom 0))
 
-(defn create-task
+(defn create-task!
   "Create a task to display in a card"
   [name done]
   (swap! next-task-id inc)
@@ -22,7 +22,7 @@
    :name name
    :done done})
 
-(defn create-card
+(defn create-card!
   "Create a card to display in the dash-board"
   [title description category status & tasks]
   (swap! next-card-id inc)
@@ -63,29 +63,37 @@
 
 (def card-list (r/atom []))
 
+(defn add-task-to!
+  [card-id task]
+  (defn add-if! [card]
+    (if (= card-id (:card-id card))
+      (update-in card [:tasks] conj (create-task! task false))
+      card))
+  (swap! card-list #(mapv add-if! %)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def init-card-list
   "Fake card list returned by the server"
-  [(create-card
+  [(create-card!
      "1st card"
      "This is my first description"
      :bug-fix
      :backlog
-     (create-task "Done some stuff" true))
-   (create-card
+     (create-task! "Done some stuff" true))
+   (create-card!
      "2nd card"
      "This is my second description"
      :enhancement
      :under-dev
-     (create-task "Done some stuff" true)
-     (create-task "Done some more stuff" false))
-   (create-card
+     (create-task! "Done some stuff" true)
+     (create-task! "Done some more stuff" false))
+   (create-card!
      "3rd card"
      "This is my third description"
      :bug-fix
      :under-dev)
-   (create-card
+   (create-card!
      "4th card"
      "This is my fourth description"
      :enhancement
@@ -132,7 +140,7 @@
         title-style #(if % :div.card__title--is-open :div.card__title)
         add-task (fn [card-id e]
                    (when (= "Enter" (.-key e))
-                     (js/alert "Find the task and add one task to it")                 
+                     (add-task-to! card-id (.. e -target -value))
                      (set! (.. e -target -value) "")
                    ))
         ]

@@ -71,18 +71,27 @@
   ])
 
 (defn render-card
-  [card]
-  [:div.card
-   [:div.card__title (:title card)]
-   [:div.card__details (:description card)]
-   [render-tasks (:tasks card)]
-  ])
+  []
+  (let [is-show-details (r/atom false)
+        show-details #(swap! is-show-details not)]
+    (fn [card]
+      [:div.card
+       [:div.card__title {:on-click show-details} (:title card)]
+       (when @is-show-details
+         [:div ;TODO - If there is not div here, it does not work
+          [:div.card__details (:description card)]
+          [render-tasks (:tasks card)]])
+      ])
+    ))
 
 (defn render-list
   [status cards]
   [:div.list
    [:h1 (status->str status)]
-   (map render-card (filter-by-status status cards))
+   (for [c (filter-by-status status cards)]
+     [render-card c])
+   ; (map render-card (filter-by-status status cards))
+   ; TODO - Investigate why if you use map it does not work...
   ])
 
 (defn render-board

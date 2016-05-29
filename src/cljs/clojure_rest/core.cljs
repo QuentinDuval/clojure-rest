@@ -2,15 +2,9 @@
   (:require
     [reagent.core :as r]
     [clojure-rest.api :as api]
-    [clojure-rest.fake-data :as fake]))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn str-contains
-  "Check whether the first string contains the second string"
-  [stack needle]
-  (< -1 (.indexOf stack needle)))
+    [clojure-rest.fake-data :as fake]
+    [clojure-rest.utils :as utils]
+  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -38,13 +32,14 @@
   [title cards]
   (if (empty? title)
     cards
-    (filter #(str-contains (:title %) title) cards)))
+    (filter #(utils/str-contains (:title %) title) cards)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; TODO - Separate concerns:
 ; - cards values and their id, and the order in which they appear
 ; - tasks values and their id
+; - if you want to expand all cards, you need the state to be public
 
 (def card-list (r/atom []))
 
@@ -67,15 +62,6 @@
           (filterv #(not= (:task-id %) task-id) tasks)))
       card))
   (swap! card-list #(mapv remove-if! %)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn fake-fetch
-  []
-  (js/setTimeout
-    #(swap! card-list
-       (fn [cards] (into cards fake/fake-card-list)))
-    1000))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -166,8 +152,11 @@
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (with-meta render-app
-    {:component-did-mount fake-fetch}))
+  (let [append-all (fn [cards] (swap! card-list #(into % cards)))]
+    (with-meta render-app
+     {:component-did-mount #(fake/fake-fetch! append-all) })
+  ))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

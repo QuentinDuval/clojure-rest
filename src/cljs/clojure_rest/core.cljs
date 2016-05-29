@@ -73,13 +73,13 @@
 
 (defn render-card
   []
-  (let [is-show-details (r/atom false)
-        show-details #(swap! is-show-details not)
+  (let [show-details (r/atom false)
+        toggle-details #(swap! show-details not)
         title-style #(if % :div.card__title--is-open :div.card__title)]
     (fn [card]
       [:div.card
-       [(title-style @is-show-details) {:on-click show-details} (:title card)]
-       (when @is-show-details
+       [(title-style @show-details) {:on-click toggle-details} (:title card)]
+       (when @show-details
          [:div.card__details
           (:description card)
           [render-tasks (:tasks card)]

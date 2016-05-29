@@ -136,17 +136,24 @@
    :backgroundColor (-> card :category category->color)
   })
 
+(defn render-add-list
+  "Render the text field allowing to add new tasks to a card"
+  [card-id]
+  [:input.checklist--add-task
+   {:type "text"
+    :placeholder "Type then hit Enter to add a task"
+    :on-key-press (fn [e]
+                    (when (= "Enter" (.-key e))
+                      (add-task-to! card-id (.. e -target -value))
+                      (set! (.. e -target -value) "")
+                  ))
+    }])
+
 (defn render-card
   []
   (let [show-details (r/atom false)
         toggle-details #(swap! show-details not)
-        title-style #(if % :div.card__title--is-open :div.card__title)
-        add-task (fn [card-id e]
-                   (when (= "Enter" (.-key e))
-                     (add-task-to! card-id (.. e -target -value))
-                     (set! (.. e -target -value) "")
-                   ))
-        ]
+        title-style #(if % :div.card__title--is-open :div.card__title)]
     (fn [card]
       [:div.card
        [:div {:style (card-side-color card)}]
@@ -155,10 +162,7 @@
          [:div.card__details
           (:description card)
           [render-tasks (:tasks card)]
-          [:input.checklist--add-task
-           {:type "text"
-            :placeholder "Type then hit Enter to add a task"
-            :on-key-press #(add-task (:card-id card) %)}]
+          [render-add-list (:card-id card)]
          ])
        ])
     ))

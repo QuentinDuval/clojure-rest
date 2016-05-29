@@ -93,8 +93,6 @@
    [:h1 (status->str status)]
    (for [c (filter-by-status status cards)]
      [render-card c])
-   ; (map render-card (filter-by-status status cards))
-   ; TODO - Investigate why if you use map it does not work...
   ])
 
 (defn render-board

@@ -74,16 +74,17 @@
 (defn render-card
   []
   (let [is-show-details (r/atom false)
-        show-details #(swap! is-show-details not)]
+        show-details #(swap! is-show-details not)
+        title-style #(if % :div.card__title--is-open :div.card__title)]
     (fn [card]
-      (if-not @is-show-details
-        [:div.card
-         [:div.card__title {:on-click show-details} (:title card)]]
-        [:div.card
-         [:div.card__title--is-open {:on-click show-details} (:title card)]
-         [:div.card__details (:description card)]
-         [render-tasks (:tasks card)]]
-        ))
+      [:div.card
+       [(title-style @is-show-details) {:on-click show-details} (:title card)]
+       (when @is-show-details
+         [:div.card__details
+          (:description card)
+          [render-tasks (:tasks card)]
+         ])
+       ])
     ))
 
 (defn render-list

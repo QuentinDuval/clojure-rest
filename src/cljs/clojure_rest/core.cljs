@@ -4,17 +4,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn str-contains
+  "Check whether the first string contains the second string"
+  [stack needle]
+  (< -1 (.indexOf stack needle)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defonce next-task-id (atom 0))
+(defonce next-card-id (atom 0))
+
 (defn create-task
   "Create a task to display in a card"
-  [id name done]
-  {:task-id id
+  [name done]
+  (swap! next-task-id inc)
+  {:task-id @next-task-id
    :name name
    :done done})
 
 (defn create-card
   "Create a card to display in the dash-board"
-  [id title description category status & tasks]
-  {:card-id id
+  [title description category status & tasks]
+  (swap! next-card-id inc)
+  {:card-id @next-card-id
    :title title
    :description description
    :category category
@@ -40,11 +52,6 @@
   [status cards]
   (filter #(= status (:status %)) cards))
 
-(defn str-contains
-  "Check whether the first string contains the second string"
-  [stack needle]
-  (< -1 (.indexOf stack needle)))
-
 (defn filter-by-title
   "Keep only cards that contains the searched string inside their title"
   [title cards]
@@ -61,25 +68,25 @@
 (def init-card-list
   "Fake card list returned by the server"
   [(create-card
-     1 "1st card"
+     "1st card"
      "This is my first description"
      :bug-fix
      :backlog
-     (create-task 1 "Done some stuff" true))
+     (create-task "Done some stuff" true))
    (create-card
-     2 "2nd card"
+     "2nd card"
      "This is my second description"
      :enhancement
      :under-dev
-     (create-task 2 "Done some stuff" true)
-     (create-task 3 "Done some more stuff" false))
+     (create-task "Done some stuff" true)
+     (create-task "Done some more stuff" false))
    (create-card
-     3 "3rd card"
+     "3rd card"
      "This is my third description"
      :bug-fix
      :under-dev)
    (create-card
-     4 "4th card"
+     "4th card"
      "This is my fourth description"
      :enhancement
      :done)])
@@ -98,7 +105,9 @@
   [:li.checklist__task
    [:input {:type "checkbox" :default-checked (:done task)}]
    (:name task)
-   [:a.checklist__task--remove {:href "#"}]
+   [:a.checklist__task--remove
+    {:href "#"
+     :on-click #(js/alert "TODO - remove the task")}]
   ])
 
 (defn render-tasks
@@ -107,11 +116,10 @@
    [:ul
     (for [t tasks]
       ^{:key (:task-id t)} [render-task t])]
-   [:input.checklist--add-task
-    {:type "text" :placeholder "Type then hit Enter to add a task"}]
   ])
 
 (defn card-side-color
+  "Render the ribbon on the left of the card, that indicates its category"
   [card]
   {:position "absolute" :zindex -1 :top 0 :bottom 0 :left 0 :width 5
    :backgroundColor (-> card :category category->color)
@@ -121,7 +129,13 @@
   []
   (let [show-details (r/atom false)
         toggle-details #(swap! show-details not)
-        title-style #(if % :div.card__title--is-open :div.card__title)]
+        title-style #(if % :div.card__title--is-open :div.card__title)
+        add-task (fn [card-id e]
+                   (when (= "Enter" (.-key e))
+                     (js/alert "Find the task and add one task to it")                 
+                     (set! (.. e -target -value) "")
+                   ))
+        ]
     (fn [card]
       [:div.card
        [:div {:style (card-side-color card)}]
@@ -130,6 +144,10 @@
          [:div.card__details
           (:description card)
           [render-tasks (:tasks card)]
+          [:input.checklist--add-task
+           {:type "text"
+            :placeholder "Type then hit Enter to add a task"
+            :on-key-press #(add-task (:card-id card) %)}]
          ])
        ])
     ))

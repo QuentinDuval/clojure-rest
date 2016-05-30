@@ -32,36 +32,35 @@
   [title cards]
   (if (empty? title)
     cards
-    (filter #(utils/str-contains (:title %) title) cards)))
+    (filter #(utils/str-contains (-> % second :title) title) cards)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO - Separate concerns:
-; - cards values and their id, and the order in which they appear
-; - tasks values and their id
-; - if you want to expand all cards, you need the state to be public
+; TODO - Separate concerns!
+; Model at the end:
+; - A map id to card
+; - Collections for each status: each holding the list of IDs they have
+; - Use a reaction to provide for the filtered list of cards (filtered by text)
 
-(def card-list (r/atom []))
+(def card-list
+  (r/atom {}))
 
 (defn add-task-to!
   "Add a new task in the card"
   [card-id task]
-  (defn add-if! [card]
-    (if (= card-id (:card-id card))
-      (update-in card [:tasks] conj (api/create-task! task false))
-      card))
-  (swap! card-list #(mapv add-if! %)))
+  (swap! card-list
+    #(update-in % [card-id :tasks] conj (api/create-task! task false))
+  ))
 
 (defn remove-task-from!
   "Remove a task from a card"
   [card-id task-id]
-  (defn remove-if! [card]
-    (if (= card-id (:card-id card))
-      (update-in card [:tasks]
-        (fn [tasks]
-          (filterv #(not= (:task-id %) task-id) tasks)))
-      card))
-  (swap! card-list #(mapv remove-if! %)))
+  (defn rem-task [cards]
+    (update-in cards [card-id :tasks]
+       (fn [tasks]
+         (filterv #(not= (:task-id %) task-id) tasks))
+    ))
+  (swap! card-list rem-task))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -124,7 +123,7 @@
   [status cards]
   [:div.list
    [:h1 (status->str status)]
-   (for [c (filter-by-status status cards)]
+   (for [c (filter-by-status status (map second cards))]
      ^{:key (:card-id c)} [render-card c])
   ])
 
@@ -152,7 +151,9 @@
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (let [append-all (fn [cards] (swap! card-list #(into % cards)))]
+  (let [add-card #(assoc %1 (:card-id %2) %2)
+        add-cards #(reduce add-card %1 %2)
+        append-all (fn [cards] (swap! card-list #(add-cards % cards)))]
     (with-meta render-app
      {:component-did-mount #(fake/fake-fetch! append-all) })
   ))

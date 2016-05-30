@@ -117,7 +117,7 @@
 
 (defn render-card
   []
-  (let [show-details (r/atom false)
+  (let [show-details (r/atom false) ; TODO - Extract show details in set of card-id
         toggle-details #(swap! show-details not)
         title-style #(if % :div.card__title--is-open :div.card__title)]
     (fn [card]
@@ -157,7 +157,7 @@
      :value (:filter @app-state)
      :on-change #(update-filter! (.. % -target -value))}]
    [render-board @card-list]
-  ])
+   ])
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"

@@ -1,4 +1,6 @@
 (ns clojure-rest.core
+  (:require-macros
+    [reagent.ratom :refer [reaction]])
   (:require
     [reagent.core :as r]
     [clojure-rest.api :as api]
@@ -42,14 +44,28 @@
 ; - Collections for each status: each holding the list of IDs they have
 ; - Use a reaction to provide for the filtered list of cards (filtered by text)
 
+(def app-state
+  (r/atom
+    {:cards {}
+     :filter ""
+    }))
+
 (def card-list
-  (r/atom {}))
+  "FRP style zoom on the card-list to render"
+  (reaction
+    (filter-by-title (:filter @app-state) (:cards @app-state))
+  ))
+
+(defn update-filter!
+  "Update the filter used in the app state"
+  [filter]
+  (swap! app-state #(assoc % :filter filter)))
 
 (defn add-task-to!
   "Add a new task in the card"
   [card-id task]
-  (swap! card-list
-    #(update-in % [card-id :tasks] conj (api/create-task! task false))
+  (swap! app-state
+    #(update-in % [:cards card-id :tasks] conj (api/create-task! task false))
   ))
 
 (defn remove-task-from!
@@ -57,7 +73,7 @@
   [card-id task-id]
   (defn filter-ids [tasks]
     (filterv #(not= (:task-id %) task-id) tasks))
-  (swap! card-list #(update-in % [card-id :tasks] filter-ids)
+  (swap! app-state #(update-in % [:cards card-id :tasks] filter-ids)
 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,24 +150,20 @@
 
 (defn render-app
   []
-  (let [search-text (r/atom "")
-        on-search-enter #(reset! search-text (.. % -target -value))]
-    (fn []
-      [:div
-       [:input.search-input
-        {:type "text"
-         :placeholder "search"
-         :value @search-text
-         :on-change on-search-enter}]
-       [render-board (filter-by-title @search-text @card-list)]
-      ])
-    ))
+  [:div
+   [:input.search-input
+    {:type "text"
+     :placeholder "search"
+     :value (:filter @app-state)
+     :on-change #(update-filter! (.. % -target -value))}]
+   [render-board @card-list]
+  ])
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (let [add-card #(assoc %1 (:card-id %2) %2)
+  (let [add-card #(assoc-in %1 [:cards (:card-id %2)] %2)
         add-cards #(reduce add-card %1 %2)
-        append-all (fn [cards] (swap! card-list #(add-cards % cards)))]
+        append-all (fn [cards] (swap! app-state #(add-cards % cards)))]
     (with-meta render-app
      {:component-did-mount #(fake/fake-fetch! append-all) })
   ))

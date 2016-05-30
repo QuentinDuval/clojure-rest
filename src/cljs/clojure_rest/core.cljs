@@ -55,12 +55,10 @@
 (defn remove-task-from!
   "Remove a task from a card"
   [card-id task-id]
-  (defn rem-task [cards]
-    (update-in cards [card-id :tasks]
-       (fn [tasks]
-         (filterv #(not= (:task-id %) task-id) tasks))
-    ))
-  (swap! card-list rem-task))
+  (defn filter-ids [tasks]
+    (filterv #(not= (:task-id %) task-id) tasks))
+  (swap! card-list #(update-in % [card-id :tasks] filter-ids)
+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

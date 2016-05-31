@@ -153,11 +153,11 @@
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (let [add-card #(assoc-in %1 [:cards (:card-id %2)] %2)
-        add-cards #(reduce add-card %1 %2)
-        append-all (fn [cards] (swap! app-state #(add-cards % cards)))]
+  (let [to-id-pair #(vector (:card-id %) %)
+        add-cards #(update-in %1 [:cards] merge (map to-id-pair %2))
+        add-cards! (fn [cards] (swap! app-state #(add-cards % cards)))]
     (with-meta render-app
-     {:component-did-mount #(fake/fake-fetch! append-all) })
+     {:component-did-mount #(fake/fake-fetch! add-cards!)})
   ))
 
 

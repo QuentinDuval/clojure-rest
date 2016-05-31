@@ -25,6 +25,13 @@
     :enhancement "#3A7E28"
     :else "#eee"))
 
+(defn card-side-color
+  "Render the ribbon on the left of the card, that indicates its category"
+  [card]
+  {:position "absolute" :zindex -1 :top 0 :bottom 0 :left 0 :width 5
+   :backgroundColor (-> card :category category->color)
+  })
+
 (defn filter-by-status
   [status cards]
   (filter #(= status (:status %)) cards))
@@ -78,17 +85,9 @@
    [:ul
     (map
       (fn [idx t]
-        [render-task #(update-card! (api/remove-task-at card idx)) t])
+        ^{:key t} [render-task #(update-card! (api/remove-task-at card idx)) t])
       (range) tasks)
-    ]
-   ])
-
-(defn card-side-color
-  "Render the ribbon on the left of the card, that indicates its category"
-  [card]
-  {:position "absolute" :zindex -1 :top 0 :bottom 0 :left 0 :width 5
-   :backgroundColor (-> card :category category->color)
-  })
+    ]])
 
 (defn render-add-task
   "Render the text field allowing to add new tasks to a card"
@@ -146,7 +145,7 @@
      :value (:filter @app-state)
      :on-change #(update-filter! (.. % -target -value))}]
    [render-board @card-list]
-   ])
+  ])
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"

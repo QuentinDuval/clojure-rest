@@ -86,12 +86,12 @@
   (let [on-remove #(update-card! (api/remove-task-at card %))
         on-check #(update-card! (update-in card [:tasks % :done] not))]
     [:div.checklist
-    [:ul
-     (map
-       (fn [idx t]
-         ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
-       (range) tasks)
-     ]]))
+     [:ul
+      (map
+        (fn [idx t]
+          ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
+        (range) tasks)]
+     ]))
 
 (defn render-add-task
   "Render the text field allowing to add new tasks to a card"
@@ -104,8 +104,8 @@
       (when (= "Enter" (.-key e))
         (update-card! (api/add-task card (.. e -target -value)))
         (set! (.. e -target -value) "")
-        ))
-    }])
+      ))
+   }])
 
 (defn render-card
   []

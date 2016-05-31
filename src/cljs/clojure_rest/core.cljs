@@ -38,12 +38,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO - Separate concerns!
-; Model at the end:
-; - A map id to card
-; - Collections for each status: each holding the list of IDs they have
-; - Use a reaction to provide for the filtered list of cards (filtered by text)
-
 (def app-state
   (r/atom
     {:cards {}
@@ -51,7 +45,7 @@
     }))
 
 (def card-list
-  "FRP style zoom on the card-list to render"
+  "FRP style zoom on the app state to render"
   (reaction
     (filter-by-title (:filter @app-state) (:cards @app-state))
   ))
@@ -61,11 +55,11 @@
   [filter]
   (swap! app-state #(assoc % :filter filter)))
 
-(defn add-task-to!
-  "Add a new task in the card"
-  [card-id task]
+(defn update-card!
+  "Update a card"
+  [card]
   (swap! app-state
-    #(update-in % [:cards card-id :tasks] conj (api/create-task! task false))
+    #(assoc-in % [:cards (:card-id card)] card)
   ))
 
 (defn remove-task-from!
@@ -92,7 +86,7 @@
   [:div.checklist
    [:ul
     (for [t tasks]
-      ^{:key (:task-id t)} [render-task card-id t])]
+      [render-task card-id t])]
   ])
 
 (defn card-side-color
@@ -104,15 +98,16 @@
 
 (defn render-add-list
   "Render the text field allowing to add new tasks to a card"
-  [card-id]
+  [card]
   [:input.checklist--add-task
    {:type "text"
     :placeholder "Type then hit Enter to add a task"
-    :on-key-press (fn [e]
-                    (when (= "Enter" (.-key e))
-                      (add-task-to! card-id (.. e -target -value))
-                      (set! (.. e -target -value) "")
-                  ))
+    :on-key-press
+    (fn [e]
+      (when (= "Enter" (.-key e))
+        (update-card! (api/add-task card (.. e -target -value)))
+        (set! (.. e -target -value) "")
+        ))
     }])
 
 (defn render-card
@@ -128,7 +123,7 @@
          [:div.card__details
           (:description card)
           [render-tasks (:card-id card) (:tasks card)]
-          [render-add-list (:card-id card)]
+          [render-add-list card]
          ])
        ])
     ))

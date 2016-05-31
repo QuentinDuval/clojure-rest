@@ -72,22 +72,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-task
-  [on-remove task]
+  [on-remove on-check task]
   [:li.checklist__task
-   [:input {:type "checkbox" :default-checked (:done task)}]
+   [:input {:type "checkbox"
+            :default-checked (:done task)
+            :on-click on-check}]
    (:name task)
    [:a.checklist__task--remove {:href "#" :on-click on-remove}]
   ])
 
 (defn render-tasks
   [{:keys [tasks] :as card}]
-  [:div.checklist
-   [:ul
-    (map
-      (fn [idx t]
-        ^{:key t} [render-task #(update-card! (api/remove-task-at card idx)) t])
-      (range) tasks)
-    ]])
+  (let [on-remove #(update-card! (api/remove-task-at card %))
+        on-check #(update-card! (update-in card [:tasks % :done] not))]
+    [:div.checklist
+    [:ul
+     (map
+       (fn [idx t]
+         ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
+       (range) tasks)
+     ]]))
 
 (defn render-add-task
   "Render the text field allowing to add new tasks to a card"

@@ -1,16 +1,8 @@
-(ns clojure-rest.api)
+(ns clojure-rest.api
+  (:require
+    [clojure-rest.utils :as utils]))
 
-
-(defonce next-task-id (atom 0))
 (defonce next-card-id (atom 0))
-
-(defn create-task!
-  "Create a task to display in a card"
-  [name done]
-  (swap! next-task-id inc)
-  {:task-id @next-task-id
-   :name name
-   :done done})
 
 (defn create-card!
   "Create a card to display in the dash-board"
@@ -22,4 +14,21 @@
    :category category
    :status status
    :tasks (into [] tasks)})
+
+(defn create-task
+  "Create a task to display in a card"
+  [name done]
+  {:name name
+   :done done})
+
+(defn add-task
+  "Add a new task in the card"
+  [card task]
+  (update-in card [:tasks]
+    conj (create-task task false)))
+
+(defn remove-task-at
+  "Remove a task at the provided index"
+  [card task-index]
+  (update-in card [:tasks] utils/remove-idx task-index))
 

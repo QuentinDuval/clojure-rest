@@ -62,32 +62,26 @@
     #(assoc-in % [:cards (:card-id card)] card)
   ))
 
-(defn remove-task-from!
-  "Remove a task from a card"
-  [card-id task-id]
-  (defn filter-ids [tasks]
-    (filterv #(not= (:task-id %) task-id) tasks))
-  (swap! app-state #(update-in % [:cards card-id :tasks] filter-ids)
-))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-task
-  [card-id task]
+  [on-remove task]
   [:li.checklist__task
    [:input {:type "checkbox" :default-checked (:done task)}]
    (:name task)
-   [:a.checklist__task--remove
-    {:href "#" :on-click #(remove-task-from! card-id (:task-id task))}]
+   [:a.checklist__task--remove {:href "#" :on-click on-remove}]
   ])
 
 (defn render-tasks
-  [card-id tasks]
+  [{:keys [tasks] :as card}]
   [:div.checklist
    [:ul
-    (for [t tasks]
-      [render-task card-id t])]
-  ])
+    (map
+      (fn [idx t]
+        [render-task #(update-card! (api/remove-task-at card idx)) t])
+      (range) tasks)
+    ]
+   ])
 
 (defn card-side-color
   "Render the ribbon on the left of the card, that indicates its category"
@@ -96,7 +90,7 @@
    :backgroundColor (-> card :category category->color)
   })
 
-(defn render-add-list
+(defn render-add-task
   "Render the text field allowing to add new tasks to a card"
   [card]
   [:input.checklist--add-task
@@ -122,8 +116,8 @@
        (when @show-details
          [:div.card__details
           (:description card)
-          [render-tasks (:card-id card) (:tasks card)]
-          [render-add-list card]
+          [render-tasks card]
+          [render-add-task card]
          ])
        ])
     ))

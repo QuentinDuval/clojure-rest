@@ -137,7 +137,7 @@
   [cards]
   [:div.app
    (for [status [:backlog :under-dev :done]]
-     [render-list status cards])
+     ^{:key status} [render-list status cards])
   ])
 
 (defn render-app

@@ -69,6 +69,14 @@
     #(assoc-in % [:cards (:card-id card)] card)
   ))
 
+(defn add-cards!
+  "Add several cards to the application state"
+  [cards]
+  (let [to-id-pair #(vector (:card-id %) %)]
+    (swap! app-state
+     #(update-in % [:cards] merge (map to-id-pair cards))
+  )))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-task
@@ -153,12 +161,8 @@
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (let [to-id-pair #(vector (:card-id %) %)
-        add-cards #(update-in %1 [:cards] merge (map to-id-pair %2))
-        add-cards! (fn [cards] (swap! app-state #(add-cards % cards)))]
-    (with-meta render-app
-     {:component-did-mount #(fake/fake-fetch! add-cards!)})
-  ))
+  (with-meta render-app
+    {:component-did-mount #(fake/fake-fetch! add-cards!)}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

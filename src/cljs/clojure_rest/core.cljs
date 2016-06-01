@@ -9,6 +9,7 @@
   ))
 
 ; https://github.com/reagent-project/reagent/blob/master/src/reagent/core.cljs
+; https://github.com/reagent-project/reagent-cookbook/blob/master/old-recipes/nvd3/README.md
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn status->str
@@ -107,6 +108,10 @@
    }])
 
 (defn render-card
+  ; TODO - Try to avoid the update-card! use and use messages / cursors
+  ; * Add an inner ratom? Then use a watch on it to update?
+  ; * Provide a callback to provide message below?
+  ; * Or fix the filter on top of the board to provide cursors down?
   [card]
   (let [show-details (::show-details card)
         toggle-details #(update-card! (update-in card [::show-details] not))
@@ -147,6 +152,8 @@
 
 (defn render-app
   []
+  ; TODO - Try to go deeper with a cursor
+  ; Try to filter, providing a list of cursors instead
   (let [filter (r/cursor app-state [:filter])
         cards (reaction (filter-by-title @filter (:cards @app-state)))]
     [:div

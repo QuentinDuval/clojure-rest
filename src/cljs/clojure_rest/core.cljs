@@ -148,6 +148,7 @@
 (defn render-app
   []
   (let [filter (r/cursor app-state [:filter])
+        cards (reaction (filter-by-title @filter (:cards @app-state)))]
     [:div
      (render-filter filter)
      [render-board @cards]]

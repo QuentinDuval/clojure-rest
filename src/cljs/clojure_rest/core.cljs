@@ -57,11 +57,6 @@
     (filter-by-title (:filter @app-state) (:cards @app-state))
   ))
 
-(defn update-filter!
-  "Update the filter used in the app state"
-  [filter]
-  (swap! app-state #(assoc % :filter filter)))
-
 (defn update-card!
   "Update a card"
   [card]
@@ -148,16 +143,21 @@
      ^{:key status} [render-list status cards])
   ])
 
+(defn render-filter
+  [filter-cursor]
+  [:input.search-input
+    {:type "text" :placeholder "search"
+     :value @filter-cursor
+     :on-change #(reset! filter-cursor (.. % -target -value))}
+  ])
+
 (defn render-app
   []
-  [:div
-   [:input.search-input
-    {:type "text"
-     :placeholder "search"
-     :value (:filter @app-state)
-     :on-change #(update-filter! (.. % -target -value))}]
-   [render-board @card-list]
-  ])
+  (let [filter (r/cursor app-state [:filter])]
+    [:div
+     (render-filter filter)
+     [render-board @card-list]]
+  ))
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"

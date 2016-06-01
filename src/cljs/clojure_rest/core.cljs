@@ -50,7 +50,7 @@
 (def app-state
   (r/atom
     {:cards {}
-     :filter ""
+     :filter "" ; BUG - If we had two boards, the cards should be the same, but not the filters
     }))
 
 (defn update-card!
@@ -63,6 +63,10 @@
 (defn add-cards!
   "Add several cards to the application state"
   [cards]
+  ; BUG - Keeping the ::show-details at app-state means that rendering twice
+  ; the component would lead to the GUI being updated at two places
+  ; => It cannot be in the component alone (if you want the expand all)
+  ;    But it should be in a state specific to the board (assoc container)
   (let [default-state {::show-details false}
         to-gui-card #(vector (:card-id %) (merge % default-state))]
     (swap! app-state
@@ -157,6 +161,7 @@
   (let [filter (r/cursor app-state [:filter])
         cards (reaction (filter-by-title @filter (:cards @app-state)))]
     [:div
+     ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)
      [render-board @cards]]
   ))

@@ -8,6 +8,7 @@
     [clojure-rest.utils :as utils]
   ))
 
+; https://github.com/reagent-project/reagent/blob/master/src/reagent/core.cljs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn status->str
@@ -109,17 +110,17 @@
   [card]
   (let [show-details (::show-details card)
         toggle-details #(update-card! (update-in card [::show-details] not))
-        title-style (if show-details :div.card__title--is-open :div.card__title)]
+        title-style (if show-details :div.card__title--is-open :div.card__title)
+        details-style (when-not show-details {:style {:display "none"}})]
     [:div.card
      [:div {:style (card-side-color card)}]
      [title-style {:on-click toggle-details} (:title card)]
-     (when show-details
-       [:div.card__details
-        (:description card)
-        [render-tasks card]
-        [render-add-task card]
-       ])
-    ]))
+     [:div.card__details details-style
+      (:description card)
+      [render-tasks card]
+      [render-add-task card]
+    ]]
+  ))
 
 (defn render-column
   [status cards]

@@ -51,12 +51,6 @@
      :filter ""
     }))
 
-(def card-list
-  "FRP style zoom on the app state to render"
-  (reaction
-    (filter-by-title (:filter @app-state) (:cards @app-state))
-  ))
-
 (defn update-card!
   "Update a card"
   [card]
@@ -153,10 +147,10 @@
 
 (defn render-app
   []
-  (let [filter (r/cursor app-state [:filter])]
+  (let [filter (r/cursor app-state [:filter])
     [:div
      (render-filter filter)
-     [render-board @card-list]]
+     [render-board @cards]]
   ))
 
 (def fetch-and-render-app

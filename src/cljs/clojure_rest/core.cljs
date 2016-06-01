@@ -61,9 +61,10 @@
 (defn add-cards!
   "Add several cards to the application state"
   [cards]
-  (let [to-id-pair #(vector (:card-id %) %)]
+  (let [default-state {::show-details false}
+        to-gui-card #(vector (:card-id %) (merge % default-state))]
     (swap! app-state
-     #(update-in % [:cards] merge (map to-id-pair cards))
+     #(update-in % [:cards] merge (map to-gui-card cards))
   )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,24 +106,22 @@
    }])
 
 (defn render-card
-  []
-  (let [show-details (r/atom false) ; TODO - Extract show details in set of card-id
-        toggle-details #(swap! show-details not)
-        title-style #(if % :div.card__title--is-open :div.card__title)]
-    (fn [card]
-      [:div.card
-       [:div {:style (card-side-color card)}]
-       [(title-style @show-details) {:on-click toggle-details} (:title card)]
-       (when @show-details
-         [:div.card__details
-          (:description card)
-          [render-tasks card]
-          [render-add-task card]
-         ])
+  [card]
+  (let [show-details (::show-details card)
+        toggle-details #(update-card! (update-in card [::show-details] not))
+        title-style (if show-details :div.card__title--is-open :div.card__title)]
+    [:div.card
+     [:div {:style (card-side-color card)}]
+     [title-style {:on-click toggle-details} (:title card)]
+     (when show-details
+       [:div.card__details
+        (:description card)
+        [render-tasks card]
+        [render-add-task card]
        ])
-    ))
+    ]))
 
-(defn render-list
+(defn render-column
   [status cards]
   [:div.list
    [:h1 (status->str status)]
@@ -134,7 +133,7 @@
   [cards]
   [:div.app
    (for [status [:backlog :under-dev :done]]
-     ^{:key status} [render-list status cards])
+     ^{:key status} [render-column status cards])
   ])
 
 (defn render-filter

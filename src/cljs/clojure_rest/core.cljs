@@ -39,14 +39,12 @@
   [status cards]
   (filter #(= status (-> % deref :status)) cards))
 
-(defn filter-by-title
-  "Return the id of the cards that contains the searched string inside their title"
-  [filter cards]
-  (->>
-    (if (empty? filter) cards
-     (filter #(utils/str-contains (-> % second :title) filter) cards))
-    (map first)
-  ))
+ (defn filter-by-title
+   "Keep only cards that contains the searched string inside their title"
+   [title cards]
+   (if (empty? title)
+     cards
+     (filter #(utils/str-contains (-> % second :title) title) cards)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -55,13 +53,6 @@
     {:cards {}
      :filter "" ; BUG - If we had two boards, the cards should be the same, but not the filters
     }))
-
-(defn update-card!
-  "Update a card"
-  [card]
-  (swap! app-state
-    #(assoc-in % [:cards (:card-id card)] card)
-  ))
 
 (defn add-cards!
   "Add several cards to the application state"
@@ -89,27 +80,27 @@
   ])
 
 (defn render-tasks
-  [{:keys [tasks] :as card}]
-  (let [on-remove #(update-card! (api/remove-task-at card %))
-        on-check #(update-card! (update-in card [:tasks % :done] not))]
+  [card-ref]
+  (let [on-remove #(swap! card-ref api/remove-task-at %)
+        on-check #(swap! card-ref update-in [:tasks % :done] not)]
     [:div.checklist
      [:ul
       (map
         (fn [idx t]
           ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
-        (range) tasks)]
+        (range) (:tasks @card-ref))]
      ]))
 
 (defn render-add-task
   "Render the text field allowing to add new tasks to a card"
-  [card]
+  [card-ref]
   [:input.checklist--add-task
    {:type "text"
     :placeholder "Type then hit Enter to add a task"
     :on-key-press
     (fn [e]
       (when (= "Enter" (.-key e))
-        (update-card! (api/add-task card (.. e -target -value)))
+        (swap! card-ref api/add-task (.. e -target -value))
         (set! (.. e -target -value) "")
       ))
    }])
@@ -117,20 +108,18 @@
 (defn render-card
   ; TODO - Try to avoid the update-card! use and use messages / cursors
   ; * Fix the filter on top of the board to provide cursors down?
-  [card-cursor]
-  (let [card (deref card-cursor)
-        show-details (::show-details card)
-        toggle-details #(update-card! (update-in card [::show-details] not))
+  [card-ref]
+  (let [show-details (::show-details @card-ref)
+        toggle-details #(swap! card-ref update-in [::show-details] not)
         title-style (if show-details :div.card__title--is-open :div.card__title)
         details-style (when-not show-details {:style {:display "none"}})]
-    ;(js/alert (str card))
     [:div.card
-     [:div {:style (card-side-color card)}]
-     [title-style {:on-click toggle-details} (:title card)]
+     [:div {:style (card-side-color @card-ref)}]
+     [title-style {:on-click toggle-details} (:title @card-ref)]
      [:div.card__details details-style
-      (:description card)
-      [render-tasks card]
-      [render-add-task card]
+      (:description @card-ref)
+      [render-tasks card-ref]
+      [render-add-task card-ref]
     ]]
   ))
 
@@ -164,8 +153,9 @@
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
-        card-ids (filter-by-title @filter (:cards @app-state))
-        card-cursors (map #(r/cursor app-state [:cards %1]) card-ids)]
+        cards (reaction (filter-by-title @filter (:cards @app-state)))
+        card-ids (reaction (map first @cards))
+        card-cursors (map #(r/cursor app-state [:cards %]) @card-ids)]
     [:div
      ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)

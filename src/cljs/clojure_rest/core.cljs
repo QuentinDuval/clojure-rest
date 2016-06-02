@@ -149,13 +149,15 @@
 
 (defn render-toggle-all
   [card-refs]
-  ; !!! The handler works, but no refresh occurs
+  ; TODO - Does not work so good: you need the state of other cards
+  ; Because they might not be in the same state => the label must change
   (let [toggle #(update-in % [::show-details] not)
         on-click (fn []
                    (doall
                      (map #(swap! % update-in [::show-details] not) card-refs))
                  )
-        ;on-click2 (fn [] (swap! card-refs #(map toggle %)))
+        ; !!! The following handler works when given @cards but no refresh occurs
+        ; on-click2 (fn [] (swap! card-refs #(map toggle %)))
         ]
     [:button.header-button
      {:on-click on-click :type "button"} "Expand all"]

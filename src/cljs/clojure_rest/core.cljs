@@ -155,12 +155,17 @@
         on-click (fn []
                    (doall
                      (map #(swap! % update-in [::show-details] not) card-refs))
-                 )
-        ; !!! The following handler works when given @cards
-        ; But no refresh occurs! And the screen is blocked
-        ; This is probably because the cursors must be re-created
-        ; on-click2 (fn [] (swap! card-refs #(map toggle %)))
-        ]
+                 )]
+    ; !!! The following handler works when given @cards
+    ; But no refresh occurs! And the screen is blocked
+    ; Even if the cursors are re-created...
+    ; on-click2 (fn [] (swap! card-refs #(map toggle %)))
+    ; 
+    ; Cursors are hard to make work:
+    ; => Use props and messages, but then you must provide call-backs
+    ; => But the worst is that you have to give the path accross functions
+    ; => INSTEAD try to create the component high (easy callback)
+    ; => And then compose them into views
     [:button.header-button
      {:on-click on-click :type "button"} "Expand all"]
   ))

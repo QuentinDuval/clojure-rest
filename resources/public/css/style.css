@@ -35,10 +35,24 @@ ul
 .search-input
 {
 	border: 1px dashed #bbb;
-	width: 99%;
+	display: inline-block;
+	width: 80%;
 	padding: 10px;
-	margin: 5px 5px;
+	margin: 10px 22px;
 	border-radius: 3px;
+}
+
+.add-card-button
+{
+    background-color: #4CAF50; /* Green */
+    display: inline-block;
+    border: 1px #bbb;
+    color: white;
+    padding: 10px 25px;
+    text-align: center;
+    display: inline-block;
+   	border-radius: 6px;
+   	font-size: 14px;
 }
 
 .app

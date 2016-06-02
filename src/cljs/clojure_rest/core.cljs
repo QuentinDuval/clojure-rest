@@ -146,6 +146,13 @@
      :on-change #(reset! filter-ref (.. % -target -value))}
   ])
 
+(defn render-add-card
+  [card-refs]
+  (let [on-click #(js/alert "toto - use route to display the form")]
+    [:button.add-card-button
+     {:on-click on-click :type "button"} "Add card"]
+  ))
+
 (defn render-app
   []
   ; TODO - Do not make such a big tree of functions
@@ -153,11 +160,13 @@
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
-        cards (reaction (filter-by-title @filter (:cards @app-state)))
-        card-refs (map #(r/cursor app-state [:cards (first %)]) @cards)]
+        cards (r/cursor app-state [:cards])
+        filtered-cards (reaction (filter-by-title @filter @cards))
+        card-refs (map #(r/cursor app-state [:cards (first %)]) @filtered-cards)]
     [:div
      ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)
+     [render-add-card cards]
      [render-board card-refs]]
   ))
 

@@ -88,7 +88,9 @@
       (map
         (fn [idx t]
           ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
-        (range) (:tasks @card-ref))]
+        (range)
+        (:tasks @card-ref)
+      )]
      ]))
 
 (defn render-add-task
@@ -147,7 +149,7 @@
 (defn render-app
   []
   ; TODO - Do not make such a big tree of functions
-  ; - The DOM needs to be that deep
+  ; - The DOM needs to be that deep, but not functions
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])

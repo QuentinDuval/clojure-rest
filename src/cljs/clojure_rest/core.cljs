@@ -10,6 +10,7 @@
 
 ; https://github.com/reagent-project/reagent/blob/master/src/reagent/core.cljs
 ; https://github.com/reagent-project/reagent-cookbook/blob/master/old-recipes/nvd3/README.md
+; https://github.com/Day8/re-frame/wiki/When-do-components-update%3F
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn status->str
@@ -146,10 +147,24 @@
      :on-change #(reset! filter-ref (.. % -target -value))}
   ])
 
+(defn render-toggle-all
+  [card-refs]
+  ; !!! The handler works, but no refresh occurs
+  (let [toggle #(update-in % [::show-details] not)
+        on-click (fn []
+                   (doall
+                     (map #(swap! % update-in [::show-details] not) card-refs))
+                 )
+        ;on-click2 (fn [] (swap! card-refs #(map toggle %)))
+        ]
+    [:button.header-button
+     {:on-click on-click :type "button"} "Expand all"]
+  ))
+
 (defn render-add-card
   [card-refs]
   (let [on-click #(js/alert "toto - use route to display the form")]
-    [:button.add-card-button
+    [:button.header-button
      {:on-click on-click :type "button"} "Add card"]
   ))
 
@@ -167,6 +182,7 @@
      ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)
      [render-add-card cards]
+     [render-toggle-all card-refs]
      [render-board card-refs]]
   ))
 

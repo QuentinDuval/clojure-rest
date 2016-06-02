@@ -36,19 +36,20 @@ ul
 {
 	border: 1px dashed #bbb;
 	display: inline-block;
-	width: 80%;
+	width: 66%;
 	padding: 10px;
 	margin: 10px 22px;
 	border-radius: 3px;
 }
 
-.add-card-button
+.header-button
 {
     background-color: #4CAF50; /* Green */
     display: inline-block;
-    border: 1px #bbb;
+    border: none;
     color: white;
     padding: 10px 25px;
+    margin: 10px 5px;
     text-align: center;
     display: inline-block;
    	border-radius: 6px;

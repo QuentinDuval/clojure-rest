@@ -156,7 +156,9 @@
                    (doall
                      (map #(swap! % update-in [::show-details] not) card-refs))
                  )
-        ; !!! The following handler works when given @cards but no refresh occurs
+        ; !!! The following handler works when given @cards
+        ; But no refresh occurs! And the screen is blocked
+        ; This is probably because the cursors must be re-created
         ; on-click2 (fn [] (swap! card-refs #(map toggle %)))
         ]
     [:button.header-button

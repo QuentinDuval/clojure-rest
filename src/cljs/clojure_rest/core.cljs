@@ -113,9 +113,7 @@
 
 (defn render-card
   ; TODO - Try to avoid the update-card! use and use messages / cursors
-  ; * Add an inner ratom? Then use a watch on it to update?
-  ; * Provide a callback to provide message below?
-  ; * Or fix the filter on top of the board to provide cursors down?
+  ; * Fix the filter on top of the board to provide cursors down?
   [card]
   (let [show-details (::show-details card)
         toggle-details #(update-card! (update-in card [::show-details] not))
@@ -157,7 +155,11 @@
 (defn render-app
   []
   ; TODO - Try to go deeper with a cursor
-  ; Try to filter, providing a list of cursors instead
+  ; Solution 1: Try to filter, providing a list of cursors instead
+  ; Solution 2: Do not make such a big tree of functions
+  ; - The DOM needs to be that deep
+  ; - But you can create the card at the top
+  ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
         cards (reaction (filter-by-title @filter (:cards @app-state)))]
     [:div

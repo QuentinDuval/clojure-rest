@@ -35,15 +35,18 @@
   })
 
 (defn filter-by-status
+  "Filter card by status"
   [status cards]
-  (filter #(= status (:status %)) cards))
+  (filter #(= status (-> % deref :status)) cards))
 
 (defn filter-by-title
-  "Keep only cards that contains the searched string inside their title"
-  [title cards]
-  (if (empty? title)
-    cards
-    (filter #(utils/str-contains (-> % second :title) title) cards)))
+  "Return the id of the cards that contains the searched string inside their title"
+  [filter cards]
+  (->>
+    (if (empty? filter) cards
+     (filter #(utils/str-contains (-> % second :title) filter) cards))
+    (map first)
+  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -114,11 +117,13 @@
 (defn render-card
   ; TODO - Try to avoid the update-card! use and use messages / cursors
   ; * Fix the filter on top of the board to provide cursors down?
-  [card]
-  (let [show-details (::show-details card)
+  [card-cursor]
+  (let [card (deref card-cursor)
+        show-details (::show-details card)
         toggle-details #(update-card! (update-in card [::show-details] not))
         title-style (if show-details :div.card__title--is-open :div.card__title)
         details-style (when-not show-details {:style {:display "none"}})]
+    ;(js/alert (str card))
     [:div.card
      [:div {:style (card-side-color card)}]
      [title-style {:on-click toggle-details} (:title card)]
@@ -133,8 +138,8 @@
   [status cards]
   [:div.list
    [:h1 (status->str status)]
-   (for [c (filter-by-status status (map second cards))]
-     ^{:key (:card-id c)} [render-card c])
+   (for [c (filter-by-status status cards)]
+     ^{:key (:card-id @c)} [render-card c])
   ])
 
 (defn render-board
@@ -154,18 +159,17 @@
 
 (defn render-app
   []
-  ; TODO - Try to go deeper with a cursor
-  ; Solution 1: Try to filter, providing a list of cursors instead
-  ; Solution 2: Do not make such a big tree of functions
+  ; TODO - Do not make such a big tree of functions
   ; - The DOM needs to be that deep
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
-        cards (reaction (filter-by-title @filter (:cards @app-state)))]
+        card-ids (filter-by-title @filter (:cards @app-state))
+        card-cursors (map #(r/cursor app-state [:cards %1]) card-ids)]
     [:div
      ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)
-     [render-board @cards]]
+     [render-board card-cursors]]
   ))
 
 (def fetch-and-render-app

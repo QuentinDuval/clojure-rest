@@ -106,8 +106,6 @@
    }])
 
 (defn render-card
-  ; TODO - Try to avoid the update-card! use and use messages / cursors
-  ; * Fix the filter on top of the board to provide cursors down?
   [card-ref]
   (let [show-details (::show-details @card-ref)
         toggle-details #(swap! card-ref update-in [::show-details] not)
@@ -124,10 +122,10 @@
   ))
 
 (defn render-column
-  [status cards]
+  [status card-refs]
   [:div.list
    [:h1 (status->str status)]
-   (for [c (filter-by-status status cards)]
+   (for [c (filter-by-status status card-refs)]
      ^{:key (:card-id @c)} [render-card c])
   ])
 
@@ -139,11 +137,11 @@
   ])
 
 (defn render-filter
-  [filter-cursor]
+  [filter-ref]
   [:input.search-input
     {:type "text" :placeholder "search"
-     :value @filter-cursor
-     :on-change #(reset! filter-cursor (.. % -target -value))}
+     :value @filter-ref
+     :on-change #(reset! filter-ref (.. % -target -value))}
   ])
 
 (defn render-app
@@ -154,12 +152,11 @@
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
         cards (reaction (filter-by-title @filter (:cards @app-state)))
-        card-ids (reaction (map first @cards))
-        card-cursors (map #(r/cursor app-state [:cards %]) @card-ids)]
+        card-refs (map #(r/cursor app-state [:cards (first %)]) @cards)]
     [:div
      ; TODO - Try to add a button to show details to all tickets
      (render-filter filter)
-     [render-board card-cursors]]
+     [render-board card-refs]]
   ))
 
 (def fetch-and-render-app

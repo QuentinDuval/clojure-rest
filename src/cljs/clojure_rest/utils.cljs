@@ -1,10 +1,18 @@
-(ns clojure-rest.utils)
+(ns clojure-rest.utils
+  (:require
+    [clojure.string :as str]
+  ))
 
 
 (defn str-contains
   "Check whether the first string contains the second string"
   [stack needle]
   (< -1 (.indexOf stack needle)))
+
+(defn lower-str-contains
+  "Check whether the first string contains the second string"
+  [stack needle]
+  (str-contains (str/lower-case stack) (str/lower-case needle)))
 
 (defn remove-idx
   "Remove the given index from the vector - but in linear time!"

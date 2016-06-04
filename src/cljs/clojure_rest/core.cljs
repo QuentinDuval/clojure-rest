@@ -35,13 +35,6 @@
    :backgroundColor (-> card :category category->color)
   })
 
-(defn filter-by-title
-  "Keep only cards that contains the searched string inside their title"
-  [title cards]
-  (if (empty? title)
-    cards
-    (filter #(utils/str-contains (-> % second :title) title) cards)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def app-state
@@ -59,6 +52,20 @@
     (swap! app-state
      #(update-in % [:cards] merge (map to-gui-card cards))
   )))
+
+(defn toggle-all-cards
+  [cards]
+  (let [all-toggled (every? #(-> % second :show-details) cards)
+        toggle-card #(assoc % :show-details (not all-toggled))]
+    (utils/map-values toggle-card cards)
+  ))
+
+(defn filter-by-title
+  "Keep only cards that contains the searched string inside their title"
+  [title cards]
+  (if (empty? title)
+    cards
+    (filter #(utils/lower-str-contains (-> % second :title) title) cards)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -105,37 +112,43 @@
   ; TODO - Try to remove the mess of call-backs
   "[Pure] Render a card" 
   [on-toggle-card on-remove-task on-check-task on-add-task]
-  (fn [card]
-    (let [card-id (:card-id card)
-          details-style (when-not (:show-details card) {:style {:display "none"}})
-          title-style (if (:show-details card) :div.card__title--is-open :div.card__title)]
+  (fn [{:keys [card-id title description show-details tasks]
+        :as card}]
+    (let [title-style (if show-details :div.card__title--is-open :div.card__title)]
       [:div.card
        [:div {:style (card-side-color card)}]
-       [title-style {:on-click #(on-toggle-card card-id)} (:title card)]
-       [:div.card__details details-style
-        (:description card)
-        [render-tasks (:tasks card) #(on-remove-task card-id %) #(on-check-task card-id %)]
+       [title-style {:on-click #(on-toggle-card card-id)} title]
+       [:div.card__details
+        (when-not show-details {:style {:display "none"}})
+        description
+        [render-tasks tasks #(on-remove-task card-id %) #(on-check-task card-id %)]
         [render-add-task #(on-add-task card-id %)]
       ]]
   )))
 
 (defn render-column
-  [card-renderer status cards]
-  [:div.list
-   [:h1 status]
-   (for [c cards]
-     ^{:key (:card-id c)} [card-renderer c])
-  ])
-
-(defn render-board
-  [card-renderer cards]
-  (let [cards-by-status (group-by :status (map second cards))]
-    [:div.app
-     (for [status [:backlog :under-dev :done]]
-       ^{:key status} [render-column card-renderer (status->str status) (cards-by-status status)])
+  "[Pure] Render a column holding a set of cards" 
+  [card-renderer]
+  (fn [title cards]
+    [:div.list
+     [:h1 title]
+     (for [c cards] ^{:key (:card-id c)} [card-renderer c])
     ]))
 
+(defn render-board
+  "[Pure] Render the dash-board as a set of column (one by status)"
+  [card-renderer]
+  (let [column-rendered (render-column card-renderer)]
+    (fn [cards]
+      (let [cards-by-status (group-by :status (map second cards))]
+        [:div.app
+         (for [status [:backlog :under-dev :done]]
+           ^{:key status} [column-rendered (status->str status) (cards-by-status status)])
+        ])
+    )))
+
 (defn render-filter
+  "[Side effect] Render the filter to only show cards containing a given text" 
   [filter-ref]
   [:input.search-input
     {:type "text" :placeholder "search"
@@ -144,6 +157,7 @@
   ])
 
 (defn render-toggle-all
+  "[Pure] Render the button to expand all cards" 
   [on-toggle-all]
   (fn []
     [:button.header-button
@@ -151,47 +165,34 @@
   ))
 
 (defn render-add-card
+  "[Pure] Render the button to expand add a new card" 
   [on-add-card]
   (fn []
     [:button.header-button
      {:on-click on-add-card :type "button"} "Add card"]
   ))
 
-(defn toggle-all-cards
-  ; TODO - Rework... the map is not nice
-  [cards]
-  (let [all-toggled (every? #(-> % second :show-details) cards)
-        toggle-card #(assoc % :show-details (not all-toggled))]
-    (utils/map-values toggle-card cards)
-  ))
-
 (defn render-app
   []
-  ; TODO - Do not make such a big tree of functions
-  ; - The DOM needs to be that deep, but not functions
-  ; - But you can create the card at the top
-  ; - And then you can assemble them (group-by or filter)
-  (let [filter (r/atom "")]
+  (let [filter (r/atom "")
+        cards (r/cursor app-state [:cards])
+        filtered (reaction (filter-by-title @filter @cards)) 
+        on-add-card #(js/alert "toto - use route to display the form")
+        on-toggle-all #(swap! cards toggle-all-cards)
+        on-toggle-card #(swap! cards update-in [%1 :show-details] not)
+        on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
+        on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
+        on-add-task #(swap! cards update-in [%1] api/add-task %2)
+        ; Create the component rendering function up here to avoid drilling with callbacks
+        card-renderer (render-card on-toggle-card on-remove-task on-check-task on-add-task)]
     (fn []
-      (let [cards (r/cursor app-state [:cards])
-            filtered (reaction (filter-by-title @filter @cards)) 
-            
-            on-add-card #(js/alert "toto - use route to display the form")
-            on-toggle-all #(swap! cards toggle-all-cards)
-            on-toggle-card #(swap! cards update-in [%1 :show-details] not)
-						on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
-						on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
-						on-add-task #(swap! cards update-in [%1] api/add-task %2)
-            ]
-        [:div
-         (render-filter filter)
-         [render-add-card on-add-card]
-         [render-toggle-all on-toggle-all]
-         [render-board
-          (render-card on-toggle-card on-remove-task on-check-task on-add-task)
-          @filtered]
-        ]))
-  ))
+      [:div
+       (render-filter filter)
+       [render-add-card on-add-card]
+       [render-toggle-all on-toggle-all]
+       [(render-board card-renderer) @filtered]
+      ])
+    ))
 
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"

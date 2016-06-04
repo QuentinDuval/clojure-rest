@@ -38,7 +38,7 @@
 (defn filter-by-status
   "Filter card by status"
   [status cards]
-  (filter #(= status (-> % deref :status)) cards))
+  (filter #(= status (:status %)) (map second cards)))
 
  (defn filter-by-title
    "Keep only cards that contains the searched string inside their title"
@@ -112,38 +112,40 @@
 (defn render-card
   ; TODO - Use a message to with the card-id + path of the action
   "[NOT Pure] Render a card" 
-  [card-ref]
-  (let [show-details (::show-details @card-ref)
-        toggle-details #(swap! card-ref update-in [::show-details] not)
-        title-style (if show-details :div.card__title--is-open :div.card__title)
-        details-style (when-not show-details {:style {:display "none"}})
-        on-remove-task #(swap! card-ref api/remove-task-at %)
-        on-check-task #(swap! card-ref update-in [:tasks % :done] not)
-        on-add-task #(swap! card-ref api/add-task %)
+  [cards-ref card]
+  (let [card-id (:card-id card)
+        details-style (when-not (::show-details card) {:style {:display "none"}})
+        title-style (if (::show-details card) :div.card__title--is-open :div.card__title)
+        
+        on-toggle-card #(swap! cards-ref update-in [card-id ::show-details] not)
+        on-remove-task #(swap! cards-ref update-in [card-id] api/remove-task-at %)
+        on-check-task #(swap! cards-ref update-in [card-id :tasks % :done] not)
+        on-add-task #(swap! cards-ref update-in [card-id] api/add-task %)
         ]
+    
     [:div.card
-     [:div {:style (card-side-color @card-ref)}]
-     [title-style {:on-click toggle-details} (:title @card-ref)]
+     [:div {:style (card-side-color card)}]
+     [title-style {:on-click on-toggle-card} (:title card)]
      [:div.card__details details-style
-      (:description @card-ref)
-      [render-tasks (:tasks @card-ref) on-remove-task on-check-task]
+      (:description card)
+      [render-tasks (:tasks card) on-remove-task on-check-task]
       [render-add-task on-add-task]
     ]]
   ))
 
 (defn render-column
-  [status card-refs]
+  [status cards-ref]
   [:div.list
    [:h1 (status->str status)]
-   (for [c (filter-by-status status card-refs)]
-     ^{:key (:card-id @c)} [render-card c])
+   (for [c (filter-by-status status @cards-ref)]
+     ^{:key (:card-id c)} [render-card cards-ref c])
   ])
 
 (defn render-board
-  [card-refs]
+  [cards-ref]
   [:div.app
    (for [status [:backlog :under-dev :done]]
-     ^{:key status} [render-column status card-refs])
+     ^{:key status} [render-column status cards-ref])
   ])
 
 (defn render-filter
@@ -176,15 +178,16 @@
   ; - And then you can assemble them (group-by or filter)
   (let [filter (r/cursor app-state [:filter])
         cards (r/cursor app-state [:cards])
-        on-toggle-all #(swap! cards api/toggle-all-cards)]
+        on-toggle-all #(swap! cards api/toggle-all-cards)
+        filtered-cards (reaction (filter-by-title @filter @cards))
+        ]
     (fn []
-      (let [filtered-cards (reaction (filter-by-title @filter @cards))
-            card-refs (reaction (map #(r/cursor cards [(first %)]) @filtered-cards))]
+      (let []
         [:div
          (render-filter filter)
          [render-add-card cards]
          [render-toggle-all on-toggle-all]
-         [render-board @card-refs]
+         [render-board filtered-cards] ;filtered-cards
         ]))
   ))
 

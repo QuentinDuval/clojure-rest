@@ -94,15 +94,15 @@
   ])
 
 (defn render-add-task
-  "Render the text field allowing to add new tasks to a card"
-  [card-ref]
+  "[Pure] Render the text field to add new tasks to a card"
+  [on-add]
   [:input.checklist--add-task
    {:type "text"
     :placeholder "Type then hit Enter to add a task"
     :on-key-press
     (fn [e]
       (when (= "Enter" (.-key e))
-        (swap! card-ref api/add-task (.. e -target -value))
+        (on-add (.. e -target -value)) 
         (set! (.. e -target -value) "")
       ))
    }])
@@ -115,6 +115,7 @@
         details-style (when-not show-details {:style {:display "none"}})
         on-remove-task #(swap! card-ref api/remove-task-at %)
         on-check-task #(swap! card-ref update-in [:tasks % :done] not)
+        on-add-task #(swap! card-ref api/add-task %)
         ]
     [:div.card
      [:div {:style (card-side-color @card-ref)}]
@@ -122,7 +123,7 @@
      [:div.card__details details-style
       (:description @card-ref)
       [render-tasks (:tasks @card-ref) on-remove-task on-check-task]
-      [render-add-task card-ref]
+      [render-add-task on-add-task]
     ]]
   ))
 

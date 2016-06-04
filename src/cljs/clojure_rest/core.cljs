@@ -150,7 +150,7 @@
   "[Pure] Render a column holding a set of cards" 
   [card-renderer {:keys [on-card-drop] :as event-handlers}]
   (fn [status cards]
-    [:div.list
+    [:div.column
      {:onDragOver #(.preventDefault %)
       :onDrop #(on-card-drop % status)}
      [:h1 (status->str status)]

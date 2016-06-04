@@ -190,13 +190,14 @@
 						on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
 						on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
 						on-add-task #(swap! cards update-in [%1] api/add-task %2)
-            card-renderer (render-card on-toggle-card on-remove-task on-check-task on-add-task)
             ]
         [:div
          (render-filter filter)
          [render-add-card on-add-card]
          [render-toggle-all on-toggle-all]
-         [render-board (filter-by-title @filter @cards) card-renderer] ;filtered-cards
+         [render-board
+          (filter-by-title @filter @cards)
+          (render-card on-toggle-card on-remove-task on-check-task on-add-task)]
         ]))
   ))
 

@@ -58,11 +58,11 @@
 (defn add-cards!
   "Add several cards to the application state"
   [cards]
-  ; BUG - Keeping the ::show-details at app-state means that rendering twice
+  ; BUG - Keeping the :show-details at app-state means that rendering twice
   ; the component would lead to the GUI being updated at two places
   ; => It cannot be in the component alone (if you want the expand all)
   ;    But it should be in a state specific to the board (assoc container)
-  (let [default-state {::show-details false}
+  (let [default-state {:show-details false}
         to-gui-card #(vector (:card-id %) (merge % default-state))]
     (swap! app-state
      #(update-in % [:cards] merge (map to-gui-card cards))
@@ -112,33 +112,33 @@
 (defn render-card
   ; TODO - Use a message to with the card-id + path of the action
   "[NOT Pure] Render a card" 
-  [cards-ref card]
-  (let [card-id (:card-id card)
-        details-style (when-not (::show-details card) {:style {:display "none"}})
-        title-style (if (::show-details card) :div.card__title--is-open :div.card__title)
-        
-        on-toggle-card #(swap! cards-ref update-in [card-id ::show-details] not)
-        on-remove-task #(swap! cards-ref update-in [card-id] api/remove-task-at %)
-        on-check-task #(swap! cards-ref update-in [card-id :tasks % :done] not)
-        on-add-task #(swap! cards-ref update-in [card-id] api/add-task %)
-        ]
+  [cards-ref]
+  (let [on-toggle-card #(swap! cards-ref update-in [%1 :show-details] not)
+        on-remove-task #(swap! cards-ref update-in [%1] api/remove-task-at %2)
+        on-check-task #(swap! cards-ref update-in [%1 :tasks %2 :done] not)
+        on-add-task #(swap! cards-ref update-in [%1] api/add-task %2)]
     
-    [:div.card
-     [:div {:style (card-side-color card)}]
-     [title-style {:on-click on-toggle-card} (:title card)]
-     [:div.card__details details-style
-      (:description card)
-      [render-tasks (:tasks card) on-remove-task on-check-task]
-      [render-add-task on-add-task]
-    ]]
-  ))
+    (fn [card]
+      (let [card-id (:card-id card)
+            details-style (when-not (:show-details card) {:style {:display "none"}})
+            title-style (if (:show-details card) :div.card__title--is-open :div.card__title)]
+        [:div.card
+         [:div {:style (card-side-color card)}]
+         [title-style {:on-click #(on-toggle-card card-id)} (:title card)]
+         [:div.card__details details-style
+          (:description card)
+          [render-tasks (:tasks card) #(on-remove-task card-id %) #(on-check-task card-id %)]
+          [render-add-task #(on-add-task card-id %)]
+         ]]
+      ))
+    ))
 
 (defn render-column
   [status cards-ref]
   [:div.list
    [:h1 (status->str status)]
    (for [c (filter-by-status status @cards-ref)]
-     ^{:key (:card-id c)} [render-card cards-ref c])
+     ^{:key (:card-id c)} [(render-card cards-ref) c])
   ])
 
 (defn render-board
@@ -170,19 +170,27 @@
      {:on-click on-click :type "button"} "Add card"]
   ))
 
+(defn toggle-all-cards
+  ; TODO - Rework... the map is not nice
+  ; It makes the rest fail (impossible to toggle afterwards)
+  [cards]
+  (let [all-toggled (every? #(-> % second :show-details) cards)
+        toggle-card #(assoc % :show-details (not all-toggled))]
+    (map (fn [[k v]] [k (toggle-card v)]) cards)
+  ))
+
 (defn render-app
   []
   ; TODO - Do not make such a big tree of functions
   ; - The DOM needs to be that deep, but not functions
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
-  (let [filter (r/cursor app-state [:filter])
-        cards (r/cursor app-state [:cards])
-        on-toggle-all #(swap! cards api/toggle-all-cards)
-        filtered-cards (reaction (filter-by-title @filter @cards))
-        ]
+  (let []
     (fn []
-      (let []
+      (let [filter (r/cursor app-state [:filter])
+            cards (r/cursor app-state [:cards])
+            on-toggle-all #(swap! cards toggle-all-cards)
+            filtered-cards (reaction (filter-by-title @filter @cards))]
         [:div
          (render-filter filter)
          [render-add-card cards]

@@ -162,10 +162,10 @@
   [column-rendered]
   (fn [cards]
     (let [cards-by-status (group-by :status (map second cards))]
-      [:div.app
+      [:div.board
        (for [status [:backlog :under-dev :done]]
          ^{:key status} [column-rendered status (cards-by-status status)])
-       ])
+      ])
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

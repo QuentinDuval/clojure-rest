@@ -56,10 +56,11 @@ ul
    	font-size: 14px;
 }
 
-.app
+.board
 {
 	white-space: nowrap;
 	height: 100%;
+	
 }
 
 .column

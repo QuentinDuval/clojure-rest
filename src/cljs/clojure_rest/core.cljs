@@ -170,7 +170,7 @@
   [cards]
   (let [all-toggled (every? #(-> % second :show-details) cards)
         toggle-card #(assoc % :show-details (not all-toggled))]
-    (map (fn [[k v]] [k (toggle-card v)]) cards)
+    (into {} (map (fn [[k v]] [k (toggle-card v)]) cards))
   ))
 
 (defn render-app

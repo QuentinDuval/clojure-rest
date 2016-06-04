@@ -108,6 +108,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn handle-drop
+  [cards e status]
+  (let [card-id (utils/get-transfer-data e :card-id)]
+    (assoc-in cards [(int card-id) :status] status)
+  ))
+
 (defn event-handlers
   [cards]
   {:on-add-card #(js/alert "toto - use route to display the form")
@@ -116,6 +122,7 @@
    :on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
    :on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
    :on-add-task #(swap! cards update-in [%1] api/add-task %2)
+   :on-card-drop #(swap! cards handle-drop %1 %2)
   })
 
 (defn render-card
@@ -125,8 +132,10 @@
     :as event-handlers}]
   (fn [{:keys [card-id title description show-details tasks]
         :as card}]
-    (let [title-style (if show-details :div.card__title--is-open :div.card__title)]
+    (let [title-style (if show-details :div.card__title--is-open :div.card__title)
+          on-drag-start #(utils/set-transfer-data % :card-id card-id)]
       [:div.card
+       {:draggable true :onDragStart on-drag-start}
        [:div {:style (card-side-color card)}]
        [title-style {:on-click #(on-toggle-card card-id)} title]
        [:div.card__details
@@ -139,24 +148,27 @@
 
 (defn render-column
   "[Pure] Render a column holding a set of cards" 
-  [card-renderer]
-  (fn [title cards]
+  [card-renderer {:keys [on-card-drop] :as event-handlers}]
+  (fn [status cards]
     [:div.list
-     [:h1 title]
+     {:onDragOver #(.preventDefault %)
+      :onDrop #(on-card-drop % status)}
+     [:h1 (status->str status)]
      (for [c cards] ^{:key (:card-id c)} [card-renderer c])
     ]))
 
 (defn render-board
   "[Pure] Render the dash-board as a set of column (one by status)"
-  [card-renderer]
-  (let [column-rendered (render-column card-renderer)]
-    (fn [cards]
-      (let [cards-by-status (group-by :status (map second cards))]
-        [:div.app
-         (for [status [:backlog :under-dev :done]]
-           ^{:key status} [column-rendered (status->str status) (cards-by-status status)])
-        ])
-    )))
+  [column-rendered]
+  (fn [cards]
+    (let [cards-by-status (group-by :status (map second cards))]
+      [:div.app
+       (for [status [:backlog :under-dev :done]]
+         ^{:key status} [column-rendered status (cards-by-status status)])
+       ])
+    ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-filter
   "[Side effect] Render the filter to only show cards containing a given text" 
@@ -189,7 +201,9 @@
         cards (r/cursor app-state [:cards])
         filtered (reaction (filter-by-title @filter @cards))
         handlers (event-handlers cards)
-        board-renderer (render-board (render-card handlers))]
+        card-renderer (render-card handlers)
+        column-rendered (render-column card-renderer handlers)
+        board-renderer (render-board column-rendered)]
     (fn []
       [:div
        (render-filter filter)

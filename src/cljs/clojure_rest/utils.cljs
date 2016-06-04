@@ -27,3 +27,13 @@
   (into {}
     (map (fn [[k v]] [k (f v)]) coll)
   ))
+
+(defn set-transfer-data
+  "Set the transfer data inside a drag start event"
+  [event key val]
+  (.setData (.. event -nativeEvent -dataTransfer) key val))
+
+(defn get-transfer-data
+  "Get the transfer data inside a drag drop event"
+  [event key]
+  (.getData (.. event -nativeEvent -dataTransfer) key))

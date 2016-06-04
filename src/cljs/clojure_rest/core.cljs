@@ -110,42 +110,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-card
-  ; TODO - Use a message to with the card-id + path of the action
-  "[NOT Pure] Render a card" 
-  [cards-ref]
-  (let [on-toggle-card #(swap! cards-ref update-in [%1 :show-details] not)
-        on-remove-task #(swap! cards-ref update-in [%1] api/remove-task-at %2)
-        on-check-task #(swap! cards-ref update-in [%1 :tasks %2 :done] not)
-        on-add-task #(swap! cards-ref update-in [%1] api/add-task %2)]
-    
-    (fn [card]
-      (let [card-id (:card-id card)
-            details-style (when-not (:show-details card) {:style {:display "none"}})
-            title-style (if (:show-details card) :div.card__title--is-open :div.card__title)]
-        [:div.card
-         [:div {:style (card-side-color card)}]
-         [title-style {:on-click #(on-toggle-card card-id)} (:title card)]
-         [:div.card__details details-style
-          (:description card)
-          [render-tasks (:tasks card) #(on-remove-task card-id %) #(on-check-task card-id %)]
-          [render-add-task #(on-add-task card-id %)]
-         ]]
-      ))
-    ))
+  ; TODO - Try to remove the mess of call-backs
+  "[Pure] Render a card" 
+  [on-toggle-card on-remove-task on-check-task on-add-task]
+  (fn [card]
+    (let [card-id (:card-id card)
+          details-style (when-not (:show-details card) {:style {:display "none"}})
+          title-style (if (:show-details card) :div.card__title--is-open :div.card__title)]
+      [:div.card
+       [:div {:style (card-side-color card)}]
+       [title-style {:on-click #(on-toggle-card card-id)} (:title card)]
+       [:div.card__details details-style
+        (:description card)
+        [render-tasks (:tasks card) #(on-remove-task card-id %) #(on-check-task card-id %)]
+        [render-add-task #(on-add-task card-id %)]
+      ]]
+  )))
 
 (defn render-column
-  [status cards-ref]
+  [status cards card-renderer]
   [:div.list
    [:h1 (status->str status)]
-   (for [c (filter-by-status status @cards-ref)]
-     ^{:key (:card-id c)} [(render-card cards-ref) c])
+   (for [c (filter-by-status status cards)]
+     ^{:key (:card-id c)} [card-renderer c])
   ])
 
 (defn render-board
-  [cards-ref]
+  [cards card-renderer]
   [:div.app
    (for [status [:backlog :under-dev :done]]
-     ^{:key status} [render-column status cards-ref])
+     ^{:key status} [render-column status cards card-renderer])
   ])
 
 (defn render-filter
@@ -164,10 +158,10 @@
   ))
 
 (defn render-add-card
-  [card-refs]
-  (let [on-click #(js/alert "toto - use route to display the form")]
+  [on-add-card]
+  (fn []
     [:button.header-button
-     {:on-click on-click :type "button"} "Add card"]
+     {:on-click on-add-card :type "button"} "Add card"]
   ))
 
 (defn toggle-all-cards
@@ -189,13 +183,20 @@
     (fn []
       (let [filter (r/cursor app-state [:filter])
             cards (r/cursor app-state [:cards])
+            
+            on-add-card #(js/alert "toto - use route to display the form")
             on-toggle-all #(swap! cards toggle-all-cards)
-            filtered-cards (reaction (filter-by-title @filter @cards))]
+            on-toggle-card #(swap! cards update-in [%1 :show-details] not)
+						on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
+						on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
+						on-add-task #(swap! cards update-in [%1] api/add-task %2)
+            card-renderer (render-card on-toggle-card on-remove-task on-check-task on-add-task)
+            ]
         [:div
          (render-filter filter)
-         [render-add-card cards]
+         [render-add-card on-add-card]
          [render-toggle-all on-toggle-all]
-         [render-board filtered-cards] ;filtered-cards
+         [render-board (filter-by-title @filter @cards) card-renderer] ;filtered-cards
         ]))
   ))
 

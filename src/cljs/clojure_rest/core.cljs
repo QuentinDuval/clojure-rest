@@ -89,8 +89,7 @@
     (map
       (fn [idx t]
         ^{:key t} [render-task t #(on-remove idx) #(on-check idx)])
-      (range)
-      (:tasks tasks)
+      (range) tasks
     )]
   ])
 
@@ -122,7 +121,7 @@
      [title-style {:on-click toggle-details} (:title @card-ref)]
      [:div.card__details details-style
       (:description @card-ref)
-      [render-tasks @card-ref on-remove-task on-check-task]
+      [render-tasks (:tasks @card-ref) on-remove-task on-check-task]
       [render-add-task card-ref]
     ]]
   ))

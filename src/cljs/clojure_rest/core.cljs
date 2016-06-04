@@ -86,10 +86,10 @@
   [tasks on-remove on-check]
   [:div.checklist
    [:ul
-    (map
+    (map-indexed
       (fn [idx t]
         ^{:key t} [render-task t #(on-remove idx) #(on-check idx)])
-      (range) tasks
+      tasks
     )]
   ])
 
@@ -108,6 +108,7 @@
    }])
 
 (defn render-card
+  "[NOT Pure] Render a card" 
   [card-ref]
   (let [show-details (::show-details @card-ref)
         toggle-details #(swap! card-ref update-in [::show-details] not)

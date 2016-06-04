@@ -136,6 +136,7 @@
   ])
 
 (defn render-board
+  ; TODO - Use group by instead of filter
   [cards card-renderer]
   [:div.app
    (for [status [:backlog :under-dev :done]]
@@ -166,11 +167,10 @@
 
 (defn toggle-all-cards
   ; TODO - Rework... the map is not nice
-  ; It makes the rest fail (impossible to toggle afterwards)
   [cards]
   (let [all-toggled (every? #(-> % second :show-details) cards)
         toggle-card #(assoc % :show-details (not all-toggled))]
-    (into {} (map (fn [[k v]] [k (toggle-card v)]) cards))
+    (utils/map-values toggle-card cards)
   ))
 
 (defn render-app

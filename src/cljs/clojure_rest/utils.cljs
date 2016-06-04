@@ -12,3 +12,9 @@
   (vec
     (concat (subvec v 0 idx) (subvec v (inc idx) (count v)))
   ))
+
+(defn map-values
+  [f coll]
+  (into {}
+    (map (fn [[k v]] [k (f v)]) coll)
+  ))

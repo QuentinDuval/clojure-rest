@@ -50,10 +50,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def app-state
-  (r/atom
-    {:cards {}
-     :filter "" ; BUG - If we had two boards, the cards should be the same, but not the filters
-    }))
+  (r/atom {:cards {}}))
 
 (defn add-cards!
   "Add several cards to the application state"
@@ -179,10 +176,10 @@
   ; - The DOM needs to be that deep, but not functions
   ; - But you can create the card at the top
   ; - And then you can assemble them (group-by or filter)
-  (let []
+  (let [filter (r/atom "")]
     (fn []
-      (let [filter (r/cursor app-state [:filter])
-            cards (r/cursor app-state [:cards])
+      (let [cards (r/cursor app-state [:cards])
+            filtered (reaction (filter-by-title @filter @cards)) 
             
             on-add-card #(js/alert "toto - use route to display the form")
             on-toggle-all #(swap! cards toggle-all-cards)
@@ -195,8 +192,7 @@
          (render-filter filter)
          [render-add-card on-add-card]
          [render-toggle-all on-toggle-all]
-         [render-board
-          (filter-by-title @filter @cards)
+         [render-board @filtered
           (render-card on-toggle-card on-remove-task on-check-task on-add-task)]
         ]))
   ))

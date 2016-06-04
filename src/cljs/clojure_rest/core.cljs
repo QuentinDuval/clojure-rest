@@ -35,17 +35,12 @@
    :backgroundColor (-> card :category category->color)
   })
 
-(defn filter-by-status
-  "Filter card by status"
-  [status cards]
-  (filter #(= status (:status %)) (map second cards)))
-
- (defn filter-by-title
-   "Keep only cards that contains the searched string inside their title"
-   [title cards]
-   (if (empty? title)
-     cards
-     (filter #(utils/str-contains (-> % second :title) title) cards)))
+(defn filter-by-title
+  "Keep only cards that contains the searched string inside their title"
+  [title cards]
+  (if (empty? title)
+    cards
+    (filter #(utils/str-contains (-> % second :title) title) cards)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -125,20 +120,20 @@
   )))
 
 (defn render-column
-  [status cards card-renderer]
+  [card-renderer status cards]
   [:div.list
-   [:h1 (status->str status)]
-   (for [c (filter-by-status status cards)]
+   [:h1 status]
+   (for [c cards]
      ^{:key (:card-id c)} [card-renderer c])
   ])
 
 (defn render-board
-  ; TODO - Use group by instead of filter
-  [cards card-renderer]
-  [:div.app
-   (for [status [:backlog :under-dev :done]]
-     ^{:key status} [render-column status cards card-renderer])
-  ])
+  [card-renderer cards]
+  (let [cards-by-status (group-by :status (map second cards))]
+    [:div.app
+     (for [status [:backlog :under-dev :done]]
+       ^{:key status} [render-column card-renderer (status->str status) (cards-by-status status)])
+    ]))
 
 (defn render-filter
   [filter-ref]
@@ -192,8 +187,9 @@
          (render-filter filter)
          [render-add-card on-add-card]
          [render-toggle-all on-toggle-all]
-         [render-board @filtered
-          (render-card on-toggle-card on-remove-task on-check-task on-add-task)]
+         [render-board
+          (render-card on-toggle-card on-remove-task on-check-task on-add-task)
+          @filtered]
         ]))
   ))
 

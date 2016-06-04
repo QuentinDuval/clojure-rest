@@ -108,10 +108,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn event-handlers
+  [cards]
+  {:on-add-card #(js/alert "toto - use route to display the form")
+   :on-toggle-all #(swap! cards toggle-all-cards)
+   :on-toggle-card #(swap! cards update-in [%1 :show-details] not)
+   :on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
+   :on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
+   :on-add-task #(swap! cards update-in [%1] api/add-task %2)
+  })
+
 (defn render-card
   ; TODO - Try to remove the mess of call-backs
   "[Pure] Render a card" 
-  [on-toggle-card on-remove-task on-check-task on-add-task]
+  [{:keys [on-toggle-card on-remove-task on-check-task on-add-task]
+    :as event-handlers}]
   (fn [{:keys [card-id title description show-details tasks]
         :as card}]
     (let [title-style (if show-details :div.card__title--is-open :div.card__title)]
@@ -176,21 +187,15 @@
   []
   (let [filter (r/atom "")
         cards (r/cursor app-state [:cards])
-        filtered (reaction (filter-by-title @filter @cards)) 
-        on-add-card #(js/alert "toto - use route to display the form")
-        on-toggle-all #(swap! cards toggle-all-cards)
-        on-toggle-card #(swap! cards update-in [%1 :show-details] not)
-        on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
-        on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
-        on-add-task #(swap! cards update-in [%1] api/add-task %2)
-        ; Create the component rendering function up here to avoid drilling with callbacks
-        card-renderer (render-card on-toggle-card on-remove-task on-check-task on-add-task)]
+        filtered (reaction (filter-by-title @filter @cards))
+        handlers (event-handlers cards)
+        board-renderer (render-board (render-card handlers))]
     (fn []
       [:div
        (render-filter filter)
-       [render-add-card on-add-card]
-       [render-toggle-all on-toggle-all]
-       [(render-board card-renderer) @filtered]
+       [render-add-card (handlers :on-add-card)]
+       [render-toggle-all (handlers :on-toggle-all)]
+       [board-renderer @filtered]
       ])
     ))
 

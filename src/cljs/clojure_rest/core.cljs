@@ -179,12 +179,12 @@
         on-toggle-all #(swap! cards api/toggle-all-cards)]
     (fn []
       (let [filtered-cards (reaction (filter-by-title @filter @cards))
-            card-refs (map #(r/cursor app-state [:cards (first %)]) @filtered-cards)]
+            card-refs (reaction (map #(r/cursor cards [(first %)]) @filtered-cards))]
         [:div
          (render-filter filter)
          [render-add-card cards]
          [render-toggle-all on-toggle-all]
-         [render-board card-refs]
+         [render-board @card-refs]
         ]))
   ))
 

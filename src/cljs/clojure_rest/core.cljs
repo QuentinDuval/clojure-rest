@@ -107,7 +107,10 @@
       ))
    }])
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn render-card
+  ; TODO - Use a message to with the card-id + path of the action
   "[NOT Pure] Render a card" 
   [card-ref]
   (let [show-details (::show-details @card-ref)
@@ -137,10 +140,10 @@
   ])
 
 (defn render-board
-  [cards]
+  [card-refs]
   [:div.app
    (for [status [:backlog :under-dev :done]]
-     ^{:key status} [render-column status cards])
+     ^{:key status} [render-column status card-refs])
   ])
 
 (defn render-filter
@@ -152,26 +155,10 @@
   ])
 
 (defn render-toggle-all
-  [card-refs]
-  ; TODO - Does not work so good: you need the state of other cards
-  ; Because they might not be in the same state => the label must change
-  (let [toggle #(update-in % [::show-details] not)
-        on-click (fn []
-                   (doall
-                     (map #(swap! % update-in [::show-details] not) card-refs))
-                 )]
-    ; !!! The following handler works when given @cards
-    ; But no refresh occurs! And the screen is blocked
-    ; Even if the cursors are re-created...
-    ; on-click2 (fn [] (swap! card-refs #(map toggle %)))
-    ; 
-    ; Cursors are hard to make work:
-    ; => Use props and messages, but then you must provide call-backs
-    ; => But the worst is that you have to give the path accross functions
-    ; => INSTEAD try to create the component high (easy callback)
-    ; => And then compose them into views
+  [on-toggle-all]
+  (fn []
     [:button.header-button
-     {:on-click on-click :type "button"} "Expand all"]
+     {:type "button" :on-click on-toggle-all} "Expand all"]
   ))
 
 (defn render-add-card
@@ -184,19 +171,21 @@
 (defn render-app
   []
   ; TODO - Do not make such a big tree of functions
- ; - The DOM needs to be that deep, but not functions
- ; - But you can create the card at the top
- ; - And then you can assemble them (group-by or filter)
- (let [filter (r/cursor app-state [:filter])
+  ; - The DOM needs to be that deep, but not functions
+  ; - But you can create the card at the top
+  ; - And then you can assemble them (group-by or filter)
+  (let [filter (r/cursor app-state [:filter])
         cards (r/cursor app-state [:cards])
-        filtered-cards (reaction (filter-by-title @filter @cards))
-        card-refs (map #(r/cursor app-state [:cards (first %)]) @filtered-cards)]
-    [:div
-     ; TODO - Try to add a button to show details to all tickets
-    (render-filter filter)
-     [render-add-card cards]
-     [render-toggle-all card-refs]
-     [render-board card-refs]]
+        on-toggle-all #(swap! cards api/toggle-all-cards)]
+    (fn []
+      (let [filtered-cards (reaction (filter-by-title @filter @cards))
+            card-refs (map #(r/cursor app-state [:cards (first %)]) @filtered-cards)]
+        [:div
+         (render-filter filter)
+         [render-add-card cards]
+         [render-toggle-all on-toggle-all]
+         [render-board card-refs]
+        ]))
   ))
 
 (def fetch-and-render-app

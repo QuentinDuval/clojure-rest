@@ -32,3 +32,10 @@
   [card task-index]
   (update-in card [:tasks] utils/remove-idx task-index))
 
+(defn toggle-all-cards
+  [cards]
+  (let [all-toggled (every? ::show-details cards)
+        toggle-card #(assoc % ::show-details (not all-toggled))]
+    (mapv toggle-card cards)
+  ))
+

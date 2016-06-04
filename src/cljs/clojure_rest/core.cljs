@@ -197,7 +197,7 @@
 (def fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
   (with-meta render-app
-    {:component-did-mount #(fake/fake-fetch! add-cards!)}))
+    {:component-did-mount #(fake/fetch-cards! add-cards!)}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

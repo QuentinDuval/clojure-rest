@@ -22,6 +22,7 @@
   ))
 
 (defn map-values
+  "Like map but over the values of an associative container"
   [f coll]
   (into {}
     (map (fn [[k v]] [k (f v)]) coll)

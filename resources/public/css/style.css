@@ -59,6 +59,7 @@ ul
 .board
 {
 	white-space: nowrap;
+	position: absolute; /* Allows to bring the columns to the bottom of the screen */
 	height: 100%;
 	width: 100%
 }

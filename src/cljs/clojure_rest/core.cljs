@@ -15,7 +15,7 @@
 
 (defn status->str
   [status]
-  (condp = status
+  (case status
     :backlog "Backlog"
     :under-dev "In Progress"
     :done "Done"
@@ -23,7 +23,7 @@
 
 (defn category->color
   [category]
-  (condp = category
+  (case category
     :bug-fix "#BD8D31"
     :enhancement "#3A7E28"
     :else "#eee"))
@@ -71,7 +71,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-task
-  [on-remove on-check task]
+  "[Pure] display a task you can check or delete" 
+  [task on-remove on-check]
   [:li.checklist__task
    [:input {:type "checkbox"
             :default-checked (:done task)
@@ -81,18 +82,17 @@
   ])
 
 (defn render-tasks
-  [card-ref]
-  (let [on-remove #(swap! card-ref api/remove-task-at %)
-        on-check #(swap! card-ref update-in [:tasks % :done] not)]
-    [:div.checklist
-     [:ul
-      (map
-        (fn [idx t]
-          ^{:key t} [render-task #(on-remove idx) #(on-check idx) t])
-        (range)
-        (:tasks @card-ref)
-      )]
-     ]))
+  "[Pure] Display a list of tasks you can check or remove" 
+  [tasks on-remove on-check]
+  [:div.checklist
+   [:ul
+    (map
+      (fn [idx t]
+        ^{:key t} [render-task t #(on-remove idx) #(on-check idx)])
+      (range)
+      (:tasks tasks)
+    )]
+  ])
 
 (defn render-add-task
   "Render the text field allowing to add new tasks to a card"
@@ -113,13 +113,16 @@
   (let [show-details (::show-details @card-ref)
         toggle-details #(swap! card-ref update-in [::show-details] not)
         title-style (if show-details :div.card__title--is-open :div.card__title)
-        details-style (when-not show-details {:style {:display "none"}})]
+        details-style (when-not show-details {:style {:display "none"}})
+        on-remove-task #(swap! card-ref api/remove-task-at %)
+        on-check-task #(swap! card-ref update-in [:tasks % :done] not)
+        ]
     [:div.card
      [:div {:style (card-side-color @card-ref)}]
      [title-style {:on-click toggle-details} (:title @card-ref)]
      [:div.card__details details-style
       (:description @card-ref)
-      [render-tasks card-ref]
+      [render-tasks @card-ref on-remove-task on-check-task]
       [render-add-task card-ref]
     ]]
   ))
@@ -180,16 +183,16 @@
 (defn render-app
   []
   ; TODO - Do not make such a big tree of functions
-  ; - The DOM needs to be that deep, but not functions
-  ; - But you can create the card at the top
-  ; - And then you can assemble them (group-by or filter)
-  (let [filter (r/cursor app-state [:filter])
+ ; - The DOM needs to be that deep, but not functions
+ ; - But you can create the card at the top
+ ; - And then you can assemble them (group-by or filter)
+ (let [filter (r/cursor app-state [:filter])
         cards (r/cursor app-state [:cards])
         filtered-cards (reaction (filter-by-title @filter @cards))
         card-refs (map #(r/cursor app-state [:cards (first %)]) @filtered-cards)]
     [:div
      ; TODO - Try to add a button to show details to all tickets
-     (render-filter filter)
+    (render-filter filter)
      [render-add-card cards]
      [render-toggle-all card-refs]
      [render-board card-refs]]

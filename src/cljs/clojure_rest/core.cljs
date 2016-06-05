@@ -112,8 +112,8 @@
 
 (def-multi-reducer app-reducer
   ; TODO - Try to use multi-methods instead
-  {:on-toggle-all (fn [store _]
-                    (toggle-all-cards store))
+  {:on-add-card (fn [store _] (js/alert "TODO") store)
+   :on-toggle-all (fn [store _] (toggle-all-cards store))
    :on-toggle-card (fn [store card-id]
                      (update-in store [card-id :show-details] not))
    :on-remove-task (fn [store card-id task-id]

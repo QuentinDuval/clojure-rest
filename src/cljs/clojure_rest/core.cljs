@@ -42,18 +42,15 @@
 (def app-state
   (r/atom {:cards {}}))
 
-(defn add-cards!
+(defn add-cards
   "Add several cards to the application state"
-  [cards]
+  [store cards]
   ; BUG - Keeping the :show-details at app-state means that rendering twice
   ; the component would lead to the GUI being updated at two places
-  ; => It cannot be in the component alone (if you want the expand all)
-  ;    But it should be in a state specific to the board (assoc container)
   (let [default-state {:show-details false}
         to-gui-card #(vector (:card-id %) (merge % default-state))]
-    (swap! app-state
-     #(update-in % [:cards] merge (map to-gui-card cards))
-  )))
+    (merge store (map to-gui-card cards))
+  ))
 
 (defn toggle-all-cards
   [cards]
@@ -112,7 +109,7 @@
 
 (def-multi-reducer
   app-reducer
- {; TODO - Add method for initialize
+ {:initialize (fn [store cards] (add-cards store cards))
   :on-add-card (fn [store _] (js/alert "TODO") store)
   :on-toggle-all (fn [store _] (toggle-all-cards store))
   :on-toggle-card (fn [store card-id]
@@ -192,7 +189,7 @@
   (fn []
     [:button.header-button
      {:type "button" :on-click #(dispatch :on-toggle-all)}
-     "Expand all"]
+"Expand all"]
   ))
 
 (defn render-add-card
@@ -205,31 +202,32 @@
   ))
 
 (defn render-app
-  []
+  "[Stateful] Render the application" 
+  [dispatch]
   (let [filter (r/atom "")
-        cards (r/cursor app-state [:cards])
-        filtered (reaction (filter-by-title @filter @cards))
-        
-        card-store (store/reducer-store cards app-reducer)
-        card-store-dispatch (store/dispatcher card-store)
-        
-        card-renderer (render-card card-store-dispatch)
-        column-rendered (render-column card-renderer card-store-dispatch)
+        card-renderer (render-card dispatch)
+        column-rendered (render-column card-renderer dispatch)
         board-renderer (render-board column-rendered)]
-    (fn []
+    (fn [cards]
       [:div
        (render-filter filter)
-       [render-add-card card-store-dispatch]
-       [render-toggle-all card-store-dispatch]
-       [board-renderer @filtered]
+       [render-add-card dispatch]
+       [render-toggle-all dispatch]
+       [board-renderer (filter-by-title @filter cards)]
       ])
     ))
 
-(def fetch-and-render-app
+(defn fetch-and-render-app
   "Render the app - adding a fetching of data when the DOM is mounted"
-  (with-meta render-app
-    {:component-did-mount #(fake/fetch-cards! add-cards!)}))
-
+  []
+  (let [cards (r/cursor app-state [:cards])
+        card-store (store/reducer-store cards app-reducer)
+        dispatch (store/dispatcher card-store)
+        app-render (render-app dispatch)]
+    (r/create-class
+      {:component-did-mount #(fake/fetch-cards! (partial dispatch :initialize))
+       :reagent-render (fn [] [app-render @cards])})
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

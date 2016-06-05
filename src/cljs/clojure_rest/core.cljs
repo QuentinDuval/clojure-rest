@@ -1,11 +1,13 @@
 (ns clojure-rest.core
   (:require-macros
+    [clojure-rest.store :refer [def-multi-reducer]]
     [reagent.ratom :refer [reaction]])
   (:require
-    [reagent.core :as r]
     [clojure-rest.api :as api]
     [clojure-rest.fake-data :as fake]
+    [clojure-rest.store :as store]
     [clojure-rest.utils :as utils]
+    [reagent.core :as r]
   ))
 
 ; https://github.com/reagent-project/reagent/blob/master/src/reagent/core.cljs
@@ -108,51 +110,52 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn handle-drop
-  [cards e status]
-  (let [card-id (utils/get-transfer-data e :card-id int)]
-    (assoc-in cards [card-id :status] status)
-  ))
+(def-multi-reducer app-reducer
+  ; TODO - Try to use multi-methods instead
+  {:on-toggle-all (fn [store _]
+                    (toggle-all-cards store))
+   :on-toggle-card (fn [store card-id]
+                     (update-in store [card-id :show-details] not))
+   :on-remove-task (fn [store card-id task-id]
+                     (update-in store [card-id] api/remove-task-at task-id))
+   :on-check-task (fn [store card-id task-id]
+                    (update-in store [card-id :tasks task-id :done] not))
+   :on-add-task (fn [store card-id task]
+                  (update-in store [card-id] api/add-task task))
+   :on-card-drop (fn [cards card-id status]
+                   (assoc-in cards [card-id :status] status))
+   })
 
-(defn event-handlers
-  [cards]
-  {:on-add-card #(js/alert "toto - use route to display the form")
-   :on-toggle-all #(swap! cards toggle-all-cards)
-   :on-toggle-card #(swap! cards update-in [%1 :show-details] not)
-   :on-remove-task #(swap! cards update-in [%1] api/remove-task-at %2)
-   :on-check-task #(swap! cards update-in [%1 :tasks %2 :done] not)
-   :on-add-task #(swap! cards update-in [%1] api/add-task %2)
-   :on-card-drop #(swap! cards handle-drop %1 %2)
-  })
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn render-card
-  ; TODO - Try to remove the mess of call-backs
   "[Pure] Render a card" 
-  [{:keys [on-toggle-card on-remove-task on-check-task on-add-task]
-    :as event-handlers}]
+  [dispatch]
   (fn [{:keys [card-id title description show-details tasks]
         :as card}]
-    (let [title-style (if show-details :div.card__title--is-open :div.card__title)
-          on-drag-start #(utils/set-transfer-data % :card-id card-id)]
+    (let [title-style (if show-details :div.card__title--is-open :div.card__title)]
       [:div.card
-       {:draggable true :onDragStart on-drag-start}
+       {:draggable true
+        :onDragStart #(utils/set-transfer-data % :card-id card-id)}
        [:div {:style (card-side-color card)}]
-       [title-style {:on-click #(on-toggle-card card-id)} title]
+       [title-style {:on-click #(dispatch :on-toggle-card card-id)} title]
        [:div.card__details
         (when-not show-details {:style {:display "none"}})
         description
-        [render-tasks tasks #(on-remove-task card-id %) #(on-check-task card-id %)]
-        [render-add-task #(on-add-task card-id %)]
+        [render-tasks tasks
+         #(dispatch :on-remove-task card-id %)
+         #(dispatch :on-check-task card-id %)]
+        [render-add-task #(dispatch :on-add-task card-id %)]
       ]]
   )))
 
 (defn render-column
   "[Pure] Render a column holding a set of cards" 
-  [card-renderer on-card-drop]
+  [card-renderer dispatch]
   (fn [status cards]
     [:div.column
      {:onDragOver #(.preventDefault %)
-      :onDrop #(on-card-drop % status)}
+      :onDrop #(dispatch :on-card-drop (utils/get-transfer-data % :card-id int) status)}
      [:h1 (status->str status)]
      (for [c cards] ^{:key (:card-id c)} [card-renderer c])
     ]))
@@ -181,18 +184,20 @@
 
 (defn render-toggle-all
   "[Pure] Render the button to expand all cards" 
-  [on-toggle-all]
+  [dispatch]
   (fn []
     [:button.header-button
-     {:type "button" :on-click on-toggle-all} "Expand all"]
+     {:type "button" :on-click #(dispatch :on-toggle-all)}
+     "Expand all"]
   ))
 
 (defn render-add-card
   "[Pure] Render the button to expand add a new card" 
-  [on-add-card]
+  [dispatch]
   (fn []
     [:button.header-button
-     {:on-click on-add-card :type "button"} "Add card"]
+     {:on-click #(dispatch :on-add-card) :type "button"}
+     "Add card"]
   ))
 
 (defn render-app
@@ -200,15 +205,18 @@
   (let [filter (r/atom "")
         cards (r/cursor app-state [:cards])
         filtered (reaction (filter-by-title @filter @cards))
-        handlers (event-handlers cards)
-        card-renderer (render-card handlers)
-        column-rendered (render-column card-renderer (handlers :on-card-drop))
+        
+        card-store (store/reducer-store cards app-reducer)
+        card-store-dispatch (store/dispatcher card-store)
+        
+        card-renderer (render-card card-store-dispatch)
+        column-rendered (render-column card-renderer card-store-dispatch)
         board-renderer (render-board column-rendered)]
     (fn []
       [:div
        (render-filter filter)
-       [render-add-card (handlers :on-add-card)]
-       [render-toggle-all (handlers :on-toggle-all)]
+       [render-add-card card-store-dispatch]
+       [render-toggle-all card-store-dispatch]
        [board-renderer @filtered]
       ])
     ))

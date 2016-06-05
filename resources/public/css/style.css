@@ -101,22 +101,15 @@ ul
 	box-shadow: 0 1px 0 rgba(0,0,0,0.25)
 }
 
-.card__title, .card__title--is-open
+.card__title
+{
+	font-weight: bold;
+}
+
+.card__title--is-open
 {
 	font-weight: bold;
 	border-bottom: solid 5px transparent;
-}
-
-.card__title:before
-{
-	display: inline-block;
-	width: 1em;
-	content: '\25b6'
-}
-
-.card__title--is-open:before
-{
-	content: '\25bc'
 }
 
 .checklist__task:first-child

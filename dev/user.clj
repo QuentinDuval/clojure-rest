@@ -16,7 +16,6 @@
 
 (def browser-repl figwheel/cljs-repl)
 
-;(clojure-rest.server/start-server 8080)
 ;(start)
 ;(browser-repl "dev")
 ;:cljs/quit

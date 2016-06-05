@@ -110,8 +110,8 @@
 
 (defn handle-drop
   [cards e status]
-  (let [card-id (utils/get-transfer-data e :card-id)]
-    (assoc-in cards [(int card-id) :status] status)
+  (let [card-id (utils/get-transfer-data e :card-id int)]
+    (assoc-in cards [card-id :status] status)
   ))
 
 (defn event-handlers

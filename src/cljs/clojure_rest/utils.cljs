@@ -35,5 +35,8 @@
 
 (defn get-transfer-data
   "Get the transfer data inside a drag drop event"
-  [event key]
-  (.getData (.. event -nativeEvent -dataTransfer) key))
+  ([event key]
+    (.getData (.. event -nativeEvent -dataTransfer) key))
+  ([event key cast-fct]
+    (cast-fct (get-transfer-data event key)))
+  )

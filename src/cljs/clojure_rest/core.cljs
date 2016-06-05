@@ -148,7 +148,7 @@
 
 (defn render-column
   "[Pure] Render a column holding a set of cards" 
-  [card-renderer {:keys [on-card-drop] :as event-handlers}]
+  [card-renderer on-card-drop]
   (fn [status cards]
     [:div.column
      {:onDragOver #(.preventDefault %)
@@ -202,7 +202,7 @@
         filtered (reaction (filter-by-title @filter @cards))
         handlers (event-handlers cards)
         card-renderer (render-card handlers)
-        column-rendered (render-column card-renderer handlers)
+        column-rendered (render-column card-renderer (handlers :on-card-drop))
         board-renderer (render-board column-rendered)]
     (fn []
       [:div

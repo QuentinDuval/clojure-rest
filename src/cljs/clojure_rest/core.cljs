@@ -110,44 +110,48 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def-multi-reducer app-reducer
-  ; TODO - Try to use multi-methods instead
-  {:on-add-card (fn [store _] (js/alert "TODO") store)
-   :on-toggle-all (fn [store _] (toggle-all-cards store))
-   :on-toggle-card (fn [store card-id]
-                     (update-in store [card-id :show-details] not))
-   :on-remove-task (fn [store card-id task-id]
-                     (update-in store [card-id] api/remove-task-at task-id))
-   :on-check-task (fn [store card-id task-id]
+(def-multi-reducer
+  app-reducer
+ {; TODO - Add method for initialize
+  :on-add-card (fn [store _] (js/alert "TODO") store)
+  :on-toggle-all (fn [store _] (toggle-all-cards store))
+  :on-toggle-card (fn [store card-id]
+                    (update-in store [card-id :show-details] not))
+  :on-remove-task (fn [store card-id task-id]
+                    (update-in store [card-id] api/remove-task-at task-id))
+  :on-check-task (fn [store card-id task-id]
                     (update-in store [card-id :tasks task-id :done] not))
-   :on-add-task (fn [store card-id task]
-                  (update-in store [card-id] api/add-task task))
-   :on-card-drop (fn [cards card-id status]
-                   (assoc-in cards [card-id :status] status))
-   })
+  :on-add-task (fn [store card-id task]
+                 (update-in store [card-id] api/add-task task))
+  :on-card-drop (fn [cards card-id status]
+                  (assoc-in cards [card-id :status] status))
+  })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn render-card-detail
+  "[Pure] Render the details of a card (description and tasks)"
+  [dispatch {:keys [card-id description show-details tasks]}]
+  [:div.card__details
+   (when-not show-details {:style {:display "none"}})
+   description
+   [render-tasks tasks #(dispatch :on-remove-task card-id %)
+                       #(dispatch :on-check-task card-id %)]
+   [render-add-task #(dispatch :on-add-task card-id %)]
+  ])
+
 (defn render-card
-  "[Pure] Render a card" 
+  "[Pure] Render a card"
   [dispatch]
-  (fn [{:keys [card-id title description show-details tasks]
-        :as card}]
+  (fn [{:keys [card-id title show-details] :as card}]
     (let [title-style (if show-details :div.card__title--is-open :div.card__title)]
       [:div.card
-       {:draggable true
-        :onDragStart #(utils/set-transfer-data % :card-id card-id)}
+       {:draggable true :onDragStart #(utils/set-transfer-data % :card-id card-id)}
        [:div {:style (card-side-color card)}]
        [title-style {:on-click #(dispatch :on-toggle-card card-id)} title]
-       [:div.card__details
-        (when-not show-details {:style {:display "none"}})
-        description
-        [render-tasks tasks
-         #(dispatch :on-remove-task card-id %)
-         #(dispatch :on-check-task card-id %)]
-        [render-add-task #(dispatch :on-add-task card-id %)]
-      ]]
-  )))
+       [render-card-detail dispatch card] 
+      ])
+    ))
 
 (defn render-column
   "[Pure] Render a column holding a set of cards" 

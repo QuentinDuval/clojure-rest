@@ -129,7 +129,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn render-card-detail
+(defn render-card-details
   "[Pure] Render the details of a card (description and tasks)"
   [dispatch {:keys [card-id description show-details tasks]}]
   [:div.card__details
@@ -149,7 +149,7 @@
        {:draggable true :onDragStart #(utils/set-transfer-data % :card-id card-id)}
        [:div {:style (card-side-color card)}]
        [title-style {:on-click #(dispatch :on-toggle-card card-id)} title]
-       [render-card-detail dispatch card] 
+       [render-card-details dispatch card] 
       ])
     ))
 

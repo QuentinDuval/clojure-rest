@@ -19,18 +19,16 @@
 
 (defn status->str
   [status]
-  (cond
-    (= status BACKLOG) "Backlog"
-    (= status UNDER-DEV) "In Progress"
-    (= status DONE) "Done"
-    :else "Unknown"))
+  (condp = status
+    BACKLOG "Backlog"
+    UNDER-DEV "In Progress"
+    DONE "Done"))
 
 (defn category->color
   [category]
-  (cond
-    (= category BUG-FIX) "#BD8D31"
-    (= category ENHANCEMENT) "#3A7E28"
-    :else "#eee"))
+  (condp = category
+    BUG-FIX "#BD8D31"
+    ENHANCEMENT "#3A7E28"))
 
 (defn card-side-color
   "Render the ribbon on the left of the card, that indicates its category"

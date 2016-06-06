@@ -111,7 +111,7 @@
 (def-multi-reducer
   app-reducer
  {:initialize (fn [store cards] (add-cards store cards))
-  :on-add-card (fn [store _] (js/alert "TODO") store)
+  :on-add-card (fn [store _] (js/alert "TODO - Add via server") store)
   :on-toggle-all (fn [store _] (toggle-all-cards store))
   :on-toggle-card (fn [store card-id]
                     (update-in store [card-id :show-details] not))

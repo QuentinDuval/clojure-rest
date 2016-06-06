@@ -1,40 +1,26 @@
 (ns clojure-rest.api
   (:require
     [ajax.core :refer [GET POST]]
+    [clojure-rest.card :as card]
     [clojure-rest.utils :as utils]
   ))
-
-(defonce next-card-id (atom 0))
-
-(defn create-card!
-  "Create a card to display in the dash-board"
-  [title description category status & tasks]
-  (swap! next-card-id inc)
-  {:card-id @next-card-id
-   :title title
-   :description description
-   :category category
-   :status status
-   :tasks (vec tasks)})
 
 (defn fetch-cards!
   [on-load]
   (GET "/cards"
-    {:handler on-load
-     :error-handler #(js/alert "Could not retrieve the cards")}
+    ; TODO - There is a problem here, the keyword? does not handle
+    ; the values "bug-fix" and "done" => this is why I see nothing
+    {:handler #(on-load (:cards %))
+     :response-format :json
+     :keywords? true
+     :error-handler #(js/alert (str "Could not retrieve the cards: " %))}
   ))
-
-(defn create-task
-  "Create a task to display in a card"
-  [name done]
-  {:name name
-   :done done})
 
 (defn add-task
   "Add a new task in the card"
   [card task]
   (update-in card [:tasks]
-    conj (create-task task false)))
+    conj (card/create-task task false)))
 
 (defn remove-task-at
   "Remove a task at the provided index"

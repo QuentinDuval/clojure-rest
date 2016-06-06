@@ -25,7 +25,7 @@
 
   :min-lein-version "2.6.1"
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
 
   :test-paths ["test/clj"]
 
@@ -43,8 +43,7 @@
 
   :cljsbuild {:builds
               {:app
-               {:source-paths ["src/cljs"]
-
+               {:source-paths ["src/cljs" "src/cljc"]
                 :figwheel true
                 ;; Alternatively, you can configure a function to run every time figwheel reloads.
                 ;; :figwheel {:on-jsload "clojure-rest.core/on-figwheel-reload"}
@@ -104,20 +103,20 @@
 
               :cljsbuild {:builds
                           {:test
-                           {:source-paths ["src/cljs" "test/cljs"]
+                           {:source-paths ["src/cljs" "test/cljs" "src/cljc"]
                             :compiler
                             {:output-to "resources/public/js/compiled/testable.js"
                              :main clojure-rest.test-runner
                              :optimizations :none}}}}}
 
              :uberjar
-             {:source-paths ^:replace ["src/clj"]
+             {:source-paths ^:replace ["src/clj" "src/cljc"]
               :hooks [leiningen.cljsbuild]
               :omit-source true
               :aot :all
               :cljsbuild {:builds
                           {:app
-                           {:source-paths ^:replace ["src/cljs"]
+                           {:source-paths ^:replace ["src/cljs" "src/cljc"]
                             :compiler
                             {:optimizations :advanced
                              :pretty-print false}}}}}})

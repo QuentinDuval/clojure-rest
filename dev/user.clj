@@ -13,10 +13,10 @@
 
 (defn start [] (figwheel/start-figwheel!))
 (defn stop [] (figwheel/stop-figwheel!))
-
 (def browser-repl figwheel/cljs-repl)
 
 ;(start)
+;(clojure-rest.server/start-server 8080)
 ;(browser-repl "dev")
 ;:cljs/quit
 ;(stop)

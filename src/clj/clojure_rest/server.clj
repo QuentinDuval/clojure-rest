@@ -3,11 +3,13 @@
     [clojure.java.io :as io]
     [compojure.core :refer [ANY GET PUT POST DELETE defroutes]]
     [compojure.route :refer [resources]]
+    [ring.adapter.jetty :refer [run-jetty]]
     [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
     [ring.middleware.json :refer [wrap-json-response]]
     [ring.middleware.gzip :refer [wrap-gzip]]
     [ring.middleware.logger :refer [wrap-with-logger]]
-    [ring.adapter.jetty :refer [run-jetty]])
+    [ring.util.response :as resp]
+    [clojure-rest.card :as card])
   (:gen-class))
 
 
@@ -18,8 +20,15 @@
    :body (io/input-stream (io/resource "public/index.html"))})
 
 (defn get-cards
-  [_]
-  {:cards []})
+  [_] ; TODO - Replace with correct implementation
+  (resp/response
+    {:cards
+     [(card/create-card!
+        "My card" "My card description" :bug-fix :done
+        (card/create-task "Ast task" true)
+        (card/create-task "2nd task" false))
+     ]}
+  ))
 
 (defroutes routes
   (GET "/" _ get-index)

@@ -9,7 +9,8 @@
     [ring.middleware.gzip :refer [wrap-gzip]]
     [ring.middleware.logger :refer [wrap-with-logger]]
     [ring.util.response :as resp]
-    [clojure-rest.card :as card])
+    [clojure-rest.card :as card]
+    [clojure-rest.fake-data :as fake])
   (:gen-class))
 
 
@@ -20,14 +21,9 @@
    :body (io/input-stream (io/resource "public/index.html"))})
 
 (defn get-cards
-  [_] ; TODO - Replace with correct implementation
+  [_]
   (resp/response
-    {:cards
-     [(card/create-card!
-        "My card" "My card description" card/BUG-FIX card/DONE
-        (card/create-task "1st task" true)
-        (card/create-task "2nd task" false))
-     ]}
+    {:cards (fake/cards)} ; TODO - Replace with correct implementation
   ))
 
 (defroutes routes

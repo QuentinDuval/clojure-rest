@@ -1,6 +1,8 @@
 (ns clojure-rest.api
   (:require
-    [clojure-rest.utils :as utils]))
+    [ajax.core :refer [GET POST]]
+    [clojure-rest.utils :as utils]
+  ))
 
 (defonce next-card-id (atom 0))
 
@@ -13,7 +15,14 @@
    :description description
    :category category
    :status status
-   :tasks (into [] tasks)})
+   :tasks (vec tasks)})
+
+(defn fetch-cards!
+  [on-load]
+  (GET "/cards"
+    {:handler on-load
+     :error-handler #(js/alert "Could not retrieve the cards")}
+  ))
 
 (defn create-task
   "Create a task to display in a card"

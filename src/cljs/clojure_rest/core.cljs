@@ -4,7 +4,6 @@
     [reagent.ratom :refer [reaction]])
   (:require
     [clojure-rest.api :as api]
-    [clojure-rest.fake-data :as fake]
     [clojure-rest.store :as store]
     [clojure-rest.utils :as utils]
     [reagent.core :as r]
@@ -13,6 +12,8 @@
 ; https://github.com/reagent-project/reagent/blob/master/src/reagent/core.cljs
 ; https://github.com/reagent-project/reagent-cookbook/blob/master/old-recipes/nvd3/README.md
 ; https://github.com/Day8/re-frame/wiki/When-do-components-update%3F
+; https://github.com/gf3/secretary
+; https://github.com/JulianBirch/cljs-ajax
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn status->str
@@ -225,7 +226,7 @@
         dispatch (store/dispatcher card-store)
         app-render (render-app dispatch)]
     (r/create-class
-      {:component-did-mount #(fake/fetch-cards! (partial dispatch :initialize))
+      {:component-did-mount #(api/fetch-cards! (partial dispatch :initialize))
        :reagent-render (fn [] [app-render @cards])})
     ))
 

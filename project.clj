@@ -4,17 +4,21 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.8.51" :scope "provided"]
-                 [org.clojure/core.async "0.2.374"]
-                 [ring "1.4.0"]
-                 [ring/ring-defaults "0.2.0"]
-                 [bk/ring-gzip "0.1.1"]
-                 [ring.middleware.logger "0.5.0"]
-                 [ring/ring-json "0.4.0"]
-                 [compojure "1.5.0"]
-                 [environ "1.0.3"]
-                 [reagent "0.5.1"]]
+  :dependencies [
+    [org.clojure/clojure "1.8.0"]
+    [org.clojure/clojurescript "1.8.51" :scope "provided"]
+    [org.clojure/core.async "0.2.374"]    
+    [bk/ring-gzip "0.1.1"]
+    [cljs-ajax "0.5.5"]
+    [compojure "1.5.0"]
+    [environ "1.0.3"]
+    [ring "1.4.0"]
+    [ring/ring-defaults "0.2.0"]
+    [ring.middleware.logger "0.5.0"]
+    [ring/ring-json "0.4.0"]
+    [reagent "0.5.1"]
+    [secretary "1.2.3"]
+  ]
 
   :plugins [[lein-cljsbuild "1.1.3"]
             [lein-environ "1.0.3"]]

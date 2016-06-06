@@ -8,8 +8,6 @@
 (defn fetch-cards!
   [on-load]
   (GET "/cards"
-    ; TODO - There is a problem here, the keyword? does not handle
-    ; the values "bug-fix" and "done" => this is why I see nothing
     {:handler #(on-load (:cards %))
      :response-format :json
      :keywords? true

@@ -24,8 +24,8 @@
   (resp/response
     {:cards
      [(card/create-card!
-        "My card" "My card description" :bug-fix :done
-        (card/create-task "Ast task" true)
+        "My card" "My card description" card/BUG-FIX card/DONE
+        (card/create-task "1st task" true)
         (card/create-task "2nd task" false))
      ]}
   ))

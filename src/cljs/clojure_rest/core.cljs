@@ -4,6 +4,7 @@
     [reagent.ratom :refer [reaction]])
   (:require
     [clojure-rest.api :as api]
+    [clojure-rest.card :as card :refer [BACKLOG BUG-FIX DONE ENHANCEMENT UNDER-DEV]]
     [clojure-rest.store :as store]
     [clojure-rest.utils :as utils]
     [reagent.core :as r]
@@ -18,17 +19,17 @@
 
 (defn status->str
   [status]
-  (case status
-    :backlog "Backlog"
-    :under-dev "In Progress"
-    :done "Done"
+  (cond
+    (= status BACKLOG) "Backlog"
+    (= status UNDER-DEV) "In Progress"
+    (= status DONE) "Done"
     :else "Unknown"))
 
 (defn category->color
   [category]
-  (case category
-    :bug-fix "#BD8D31"
-    :enhancement "#3A7E28"
+  (cond
+    (= category BUG-FIX) "#BD8D31"
+    (= category ENHANCEMENT) "#3A7E28"
     :else "#eee"))
 
 (defn card-side-color
@@ -168,7 +169,7 @@
   (fn [cards]
     (let [cards-by-status (group-by :status (map second cards))]
       [:div.board
-       (for [status [:backlog :under-dev :done]]
+       (for [status [BACKLOG UNDER-DEV DONE]]
          ^{:key status} [column-rendered status (cards-by-status status)])
       ])
     ))

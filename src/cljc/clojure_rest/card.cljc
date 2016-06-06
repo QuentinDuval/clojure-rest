@@ -1,11 +1,27 @@
 (ns clojure-rest.card)
 
 
-; TO SHARE CODE
-; https://github.com/emezeske/lein-cljsbuild/blob/master/doc/CROSSOVERS.md
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The available statuses
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def BACKLOG "Backlog")
+(def DONE "Done")
+(def UNDER-DEV "In progress")
 
 
-(defonce next-card-id (atom 0))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The available categories
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def BUG-FIX "bug-fix")
+(def ENHANCEMENT "enhancement")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defonce ^:private
+  next-card-id (atom 0))
 
 (defn create-card!
   "Create a card to display in the dash-board"

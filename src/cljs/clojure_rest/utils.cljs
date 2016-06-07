@@ -5,12 +5,12 @@
 
 
 (defn lower-str-contains
-  "Check whether the first string contains the second string"
+  "Check whether the first string contains the second string, not taking the case into account"
   [stack needle]
   (str/includes? (str/lower-case stack) (str/lower-case needle)))
 
 (defn remove-idx
-  "Remove the given index from the vector - but in linear time!"
+  "Remove the given index from the vector - in linear time (could be made logarithmic)"
   [v idx]
   (vec
     (concat (subvec v 0 idx) (subvec v (inc idx) (count v)))
@@ -20,8 +20,8 @@
   "Like map but over the values of an associative container"
   [f coll]
   (into {}
-    (map (fn [[k v]] [k (f v)]) coll)
-  ))
+    (map (fn [[k v]] [k (f v)]))
+    coll))
 
 (defn set-transfer-data
   "Set the transfer data inside a drag start event"

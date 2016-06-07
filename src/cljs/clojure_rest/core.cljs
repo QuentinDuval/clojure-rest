@@ -109,7 +109,7 @@
 
 (def-multi-reducer
   app-reducer
- {:initialize (fn [store cards] (add-cards store cards))
+  :initialize (fn [store cards] (add-cards store cards))
   :on-add-card (fn [store _] (js/alert "TODO - Add via server") store)
   :on-toggle-all (fn [store _] (toggle-all-cards store))
   :on-toggle-card (fn [store card-id]
@@ -122,7 +122,7 @@
                  (update-in store [card-id] api/add-task task))
   :on-card-drop (fn [cards card-id status]
                   (assoc-in cards [card-id :status] status))
-  })
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

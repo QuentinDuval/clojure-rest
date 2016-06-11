@@ -7,6 +7,8 @@
     [clojure-rest.card :as card :refer [BACKLOG BUG-FIX DONE ENHANCEMENT UNDER-DEV]]
     [clojure-rest.store :as store]
     [clojure-rest.utils :as utils]
+    [clojure-rest.comp.search :as search]
+    [clojure-rest.comp.task :as task]
     [reagent.core :as r]
   ))
 
@@ -39,7 +41,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def app-state
+(defonce app-state
   (r/atom {:cards {}}))
 
 (defn add-cards
@@ -68,45 +70,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn render-task
-  "[Pure] display a task you can check or delete" 
-  [task on-remove on-check]
-  [:li.checklist__task
-   [:input {:type "checkbox"
-            :default-checked (:done task)
-            :on-click on-check}]
-   (:name task)
-   [:a.checklist__task--remove {:href "#" :on-click on-remove}]
-  ])
-
-(defn render-tasks
-  "[Pure] Display a list of tasks you can check or remove" 
-  [tasks on-remove on-check]
-  [:div.checklist
-   [:ul
-    (map-indexed
-      (fn [idx t]
-        ^{:key t} [render-task t #(on-remove idx) #(on-check idx)])
-      tasks
-    )]
-  ])
-
-(defn render-add-task
-  "[Pure] Render the text field to add new tasks to a card"
-  [on-add]
-  [:input.checklist--add-task
-   {:type "text"
-    :placeholder "Type then hit Enter to add a task"
-    :on-key-press
-    (fn [e]
-      (when (= "Enter" (.-key e))
-        (on-add (.. e -target -value)) 
-        (set! (.. e -target -value) "")
-      ))
-   }])
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (def-multi-reducer
   app-reducer
   :initialize (fn [store cards] (add-cards store cards))
@@ -132,9 +95,9 @@
   [:div.card__details
    (when-not show-details {:style {:display "none"}})
    description
-   [render-tasks tasks #(dispatch :on-remove-task card-id %)
-                       #(dispatch :on-check-task card-id %)]
-   [render-add-task #(dispatch :on-add-task card-id %)]
+   [task/render-tasks tasks #(dispatch :on-remove-task card-id %)
+                            #(dispatch :on-check-task card-id %)]
+   [task/render-add-task #(dispatch :on-add-task card-id %)]
   ])
 
 (defn render-card
@@ -174,22 +137,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn render-filter
-  "[Side effect] Render the filter to only show cards containing a given text" 
-  [filter-ref]
-  [:input.search-input
-    {:type "text" :placeholder "search"
-     :value @filter-ref
-     :on-change #(reset! filter-ref (.. % -target -value))}
-  ])
-
 (defn render-toggle-all
   "[Pure] Render the button to expand all cards" 
   [dispatch]
   (fn []
     [:button.header-button
      {:type "button" :on-click #(dispatch :on-toggle-all)}
-"Expand all"]
+     "Expand all"]
   ))
 
 (defn render-add-card
@@ -210,7 +164,7 @@
         board-renderer (render-board column-rendered)]
     (fn [cards]
       [:div
-       (render-filter filter)
+       [search/render-filter filter]
        [render-add-card dispatch]
        [render-toggle-all dispatch]
        [board-renderer (filter-by-title @filter cards)]

@@ -19,15 +19,6 @@
 ; https://github.com/JulianBirch/cljs-ajax
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn status->str
-  [status]
-  (condp = status
-    BACKLOG "Backlog"
-    UNDER-DEV "In Progress"
-    DONE "Done"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (def app-state
   (r/atom {:cards {}}))
 
@@ -75,6 +66,13 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn status->str
+  [status]
+  (condp = status
+    BACKLOG "Backlog"
+    UNDER-DEV "In Progress"
+    DONE "Done"))
 
 (defn render-column
   "[Pure] Render a column holding a set of cards" 
